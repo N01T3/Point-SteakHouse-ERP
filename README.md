@@ -40,6 +40,7 @@ módulo de produção.
 | Backend | NestJS (Node.js / TypeScript) |
 | ORM | Prisma 7 |
 | Banco | PostgreSQL 16 |
+| Runtime | **Node.js 24** (mín. 22) · npm 11 |
 | Testes | Vitest (unit + e2e) · Supertest · Vue Test Utils · jsdom |
 | Lint / Formato | oxlint (backend) · Prettier · `vue-tsc` (frontend) |
 | Infra | Docker Compose · GitHub Actions CI |
@@ -118,7 +119,9 @@ As rotas do router declaram `meta.papeisPermitidos`; o guard redireciona para
 
 ### Pré-requisitos
 
-- Node.js 20+
+- **Node.js 24** (mínimo 22 — várias dependências, como
+  `@nestjs/schematics`, `@angular-devkit/*` e `undici`/`jsdom`, exigem
+  `^22.22.3 || ^24.15.0`)
 - Docker (para o PostgreSQL) — ou uma instância própria de PostgreSQL 16
 
 ### 1. Banco de dados
@@ -229,6 +232,11 @@ cd frontend && npx vue-tsc -b    # type-check
 | `test-frontend` | `vitest run` |
 | `build-backend` | `nest build` (depende de lint + test) |
 | `build-frontend` | `vue-tsc -b && vite build` (depende de lint + test) |
+
+Todos os jobs usam **Node.js 24**. Usar Node 20 quebra dois pontos: o `npm ci`
+rejeita o lock gerado por npm 11 (`Missing: typescript@5.9.3 from lock file`) e
+o `undici`/`jsdom` dos testes de frontend falha com
+`webidl.util.markAsUncloneable is not a function`.
 
 ---
 
