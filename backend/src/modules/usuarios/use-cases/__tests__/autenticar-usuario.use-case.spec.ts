@@ -37,7 +37,7 @@ describe('AutenticarUsuarioUseCase', () => {
       nome: 'Dono',
       email: 'dono@pointsteakhouse.com',
       senhaHash,
-      papel: PapelUsuario.DONO,
+      papel: PapelUsuario.PROPRIETARIO,
       refreshTokenHash: null,
     })
     const repositorio = criarRepositorioFalso(usuario)
@@ -47,7 +47,7 @@ describe('AutenticarUsuarioUseCase', () => {
 
     expect(resultado.tokenDeAcesso).toBeTruthy()
     expect(resultado.tokenDeRenovacao).toBeTruthy()
-    expect(resultado.usuario.papel).toBe(PapelUsuario.DONO)
+    expect(resultado.usuario.papel).toBe(PapelUsuario.PROPRIETARIO)
     expect(repositorio.atualizarRefreshTokenHash).toHaveBeenCalledWith('usuario-1', expect.any(String))
   })
 
@@ -57,7 +57,7 @@ describe('AutenticarUsuarioUseCase', () => {
       nome: 'Dono',
       email: 'dono@pointsteakhouse.com',
       senhaHash,
-      papel: PapelUsuario.DONO,
+      papel: PapelUsuario.PROPRIETARIO,
       refreshTokenHash: null,
     })
     const repositorio = criarRepositorioFalso(usuario)

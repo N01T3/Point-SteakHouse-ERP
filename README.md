@@ -215,9 +215,15 @@ npm run test
 
 ```bash
 # qualidade
-cd backend  && npm run lint      # oxlint
-cd frontend && npx vue-tsc -b    # type-check
+cd backend  && npm run lint       # oxlint
+cd backend  && npm run typecheck  # tsc --noEmit (inclui os *.spec.ts)
+cd frontend && npx vue-tsc -b     # type-check
 ```
+
+> O `nest build` usa `tsconfig.build.json`, que **exclui** `**/*spec.ts` — por
+> isso o `typecheck` existe como passo separado: sem ele, erros de tipo nos
+> testes do backend passariam despercebidos (foi assim que um
+> `PapelUsuario.DONO` inexistente sobreviveu).
 
 ## Integração contínua
 
@@ -226,7 +232,7 @@ cd frontend && npx vue-tsc -b    # type-check
 
 | Job | O que faz |
 |---|---|
-| `lint-backend` | `oxlint` |
+| `lint-backend` | `oxlint` + `tsc --noEmit` (type-check, inclui specs) |
 | `lint-frontend` | `vue-tsc -b` |
 | `test-backend` | sobe PostgreSQL 16 como service, `prisma migrate deploy`, `vitest run` |
 | `test-frontend` | `vitest run` |
