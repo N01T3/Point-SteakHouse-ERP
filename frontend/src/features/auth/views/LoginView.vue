@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { demonstracaoExpirada, modoAmostraOnline, obterTempoRestanteDemo } from '../services/auth.mock'
+import { demonstracaoExpirada, identificadorDemo, modoAmostraOnline, obterTempoRestanteDemo } from '../services/auth.mock'
 import { obterTempoRestanteDoSite } from '../../../shared/amostra/prazo-do-site'
 import { useAuthStore } from '../store/auth.store'
 
@@ -14,6 +14,7 @@ const senha = ref('')
 const erro = ref('')
 const carregando = ref(false)
 const amostraOnline = computed(() => modoAmostraOnline())
+const usuarioDemo = computed(() => identificadorDemo())
 const expirada = computed(() => amostraOnline.value && demonstracaoExpirada())
 function formatarDuracao(ms: number): string {
   const h = Math.floor(ms / 3600000)
@@ -86,6 +87,7 @@ async function aoEnviarLogin(): Promise<void> {
       <div v-if="amostraOnline" class="demo">
         <div class="demo-titulo">Acesso de demonstração</div>
         <p class="demo-texto">Use a credencial única enviada para avaliação. Ela vale por 4 horas após o primeiro uso.</p>
+        <p class="demo-texto">Usuário: <strong>{{ usuarioDemo }}</strong></p>
         <p v-if="tempoRestante" class="demo-texto">Tempo restante neste navegador: {{ tempoRestante }}.</p>
         <p v-if="siteRestante" class="demo-texto">Site disponível por mais {{ siteRestante }}.</p>
         <p v-if="expirada" class="erro" role="alert">Demonstração expirada neste navegador.</p>

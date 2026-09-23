@@ -77,14 +77,17 @@ export function modoAmostraOnline(): boolean {
   }
 }
 
-function identificadorDemo(): string {
+export function identificadorDemo(): string {
   const v = import.meta.env?.VITE_DEMO_USUARIO as string | undefined
   return (v ?? 'demo').trim().toLowerCase() || 'demo'
 }
 
+export const SENHA_DEMO_PADRAO = 'demo-4h-2026'
+
 function senhaDemo(): string {
   const v = import.meta.env?.VITE_DEMO_SENHA as string | undefined
-  return v ?? 'demo-4h-2026'
+  // Var vazia no dashboard = travamento total (nada loga); cai no padrão documentado.
+  return v && v.length > 0 ? v : SENHA_DEMO_PADRAO
 }
 
 function lerPrimeiroUso(): number | null {

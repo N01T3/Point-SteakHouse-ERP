@@ -25,6 +25,13 @@ describe('amostra online: credencial única com queima de 4h', () => {
     expect(resposta.usuario.papel).toBe('PROPRIETARIO')
   })
 
+  it('senha vazia no dashboard cai no padrão documentado (sem travamento total)', async () => {
+    vi.stubEnv('VITE_DEMO_SENHA', '')
+    const { login } = await importarMock()
+    const { SENHA_DEMO_PADRAO } = await import('../auth.mock')
+    const resposta = await login('demo', SENHA_DEMO_PADRAO)
+    expect(resposta.usuario.identificador).toBe('demo')
+  })
   it('carimba o primeiro uso e bloqueia após 4h', async () => {
     const { DEMO_DURACAO_MS, demonstracaoExpirada, login, obterTempoRestanteDemo } =
       await importarMock()
