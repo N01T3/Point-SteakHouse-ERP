@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600;6..96,700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Manrope', sans-serif;
+  background: var(--cor-bg);
+  color: var(--cor-on-bg);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cor-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Tabelas rolam na horizontal em vez de quebrar o layout */
+  .tabela {
+    display: block;
+    overflow-x: auto;
+  }
+
+  /* Alvos de toque mínimos nas ações principais */
+  .botao-primario,
+  .botao-secundario,
+  .abas button,
+  .subabas button,
+  .segmentado button {
+    min-height: 44px;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(190, 80, 70, 0.22);
+  border-radius: 8px;
+}

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+src/generated/
+backend/src/generated/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+.claude/
+coverage/
+.vscode/

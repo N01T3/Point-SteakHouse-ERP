@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PapelUsuario {
+  PROPRIETARIO
+  ADMINISTRADOR
+  ACOUGUEIRO
+  CAIXA
+}
+
+model Usuario {
+  id                  String   @id @default(uuid())
+  nome                String
+  email               String   @unique
+  senhaHash           String
+  papel               PapelUsuario
+  refreshTokenHash    String?
+  criadoEm            DateTime @default(now())
+  atualizadoEm        DateTime @updatedAt
+}
+
+enum CanalDeVenda {
+  SALAO
+  MERCADO
+}
+
+// Catálogo mínimo de cortes — o módulo de Desossa & Subprodutos (Fase 6) assume a
+// propriedade completa desta entidade; aqui ela só existe para o Dashboard agregar vendas.
+model Corte {
+  id    String @id @default(uuid())
+  nome  String @unique
+
+  itensDePedido ItemDePedido[]
+}
+
+model Pedido {
+  id          String       @id @default(uuid())
+  canal       CanalDeVenda
+  valorTotal  Decimal      @db.Money
+  criadoEm    DateTime     @default(now())
+
+  itens ItemDePedido[]
+}
+
+model ItemDePedido {
+  id         String  @id @default(uuid())
+  pedidoId   String
+  pedido     Pedido  @relation(fields: [pedidoId], references: [id])
+  corteId    String
+  corte      Corte   @relation(fields: [corteId], references: [id])
+  pesoKg     Decimal
+  valorTotal Decimal @db.Money
+}
+
+model Cliente {
+  id            String         @id @default(uuid())
+  nome          String
+  contaCorrente ContaCorrente?
+}
+
+model ContaCorrente {
+  id           String  @id @default(uuid())
+  clienteId    String  @unique
+  cliente      Cliente @relation(fields: [clienteId], references: [id])
+  saldoDevedor Decimal @db.Money
+}
+
+// Modelagem mínima para o Dashboard. O módulo de Maturação (Fase 5) substitui `tipo`
+// por um Value Object dedicado e adiciona o ciclo de vida completo da peça.
+model PecaEmMaturacao {
+  id        String @id @default(uuid())
+  nome      String
+  tipo      String
+  diasAtual Int
+  diasTotal Int
+}
+
+model ItemDeEstoque {
+  id               String  @id @default(uuid())
+  nome             String
+  quantidadeAtual  Decimal
+  quantidadeMinima Decimal
+  unidade          String
+}
