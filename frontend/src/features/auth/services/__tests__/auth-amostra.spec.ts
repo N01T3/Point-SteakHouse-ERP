@@ -50,6 +50,14 @@ describe('amostra online: credencial única com queima de 4h', () => {
     await expect(login('demo', 'segredo-teste')).rejects.toThrow(/expirada/i)
   })
 
+  it('ignora espaços acidentais nas envs do dashboard', async () => {
+    vi.stubEnv('VITE_AMOSTRA_ONLINE', ' true ')
+    vi.stubEnv('VITE_DEMO_SENHA', '  segredo-teste  ')
+    const { login, modoAmostraOnline } = await importarMock()
+    expect(modoAmostraOnline()).toBe(true)
+    const resposta = await login('demo', 'segredo-teste')
+    expect(resposta.usuario.identificador).toBe('demo')
+  })
   it('bloqueia redefinição de senha na amostra', async () => {
     const { redefinirSenhaMock } = await importarMock()
     expect(() => redefinirSenhaMock('demo', 'nova')).toThrow(/indisponível/i)

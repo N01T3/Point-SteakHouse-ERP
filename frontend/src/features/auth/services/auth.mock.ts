@@ -71,7 +71,8 @@ const CHAVE_PRIMEIRO_USO = 'point_demo_primeiro_uso'
 
 export function modoAmostraOnline(): boolean {
   try {
-    return import.meta.env?.VITE_AMOSTRA_ONLINE === 'true'
+    const v = import.meta.env?.VITE_AMOSTRA_ONLINE as string | undefined
+    return (v ?? '').trim() === 'true'
   } catch {
     return false
   }
@@ -86,8 +87,10 @@ export const SENHA_DEMO_PADRAO = 'demo-4h-2026'
 
 function senhaDemo(): string {
   const v = import.meta.env?.VITE_DEMO_SENHA as string | undefined
-  // Var vazia no dashboard = travamento total (nada loga); cai no padrão documentado.
-  return v && v.length > 0 ? v : SENHA_DEMO_PADRAO
+  // Var vazia ou só-espaços no dashboard = travamento total (nada loga);
+  // cai no padrão documentado. Trim evita espaço colado no copiar/colar.
+  const senha = (v ?? '').trim()
+  return senha.length > 0 ? senha : SENHA_DEMO_PADRAO
 }
 
 function lerPrimeiroUso(): number | null {

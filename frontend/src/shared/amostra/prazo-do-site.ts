@@ -14,7 +14,8 @@ const CHAVE_PRIMEIRA_VISITA = 'point_site_primeira_visita'
 
 function amostraOnline(): boolean {
   try {
-    return import.meta.env?.VITE_AMOSTRA_ONLINE === 'true'
+    const v = import.meta.env?.VITE_AMOSTRA_ONLINE as string | undefined
+    return (v ?? '').trim() === 'true'
   } catch {
     return false
   }
