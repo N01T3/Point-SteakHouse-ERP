@@ -41,7 +41,7 @@ describe('prazo do site da amostra', () => {
   it('ignora data inválida e usa o fallback da primeira visita', async () => {
     vi.stubEnv('VITE_AMOSTRA_EXPIRA_EM', 'não-é-data')
     const { DURACAO_PADRAO_SITE_MS, marcarPrimeiraVisita, siteExpirado } = await importarPrazo()
-    expect(DURACAO_PADRAO_SITE_MS).toBe(12 * 60 * 60 * 1000)
+    expect(DURACAO_PADRAO_SITE_MS).toBe(14 * 60 * 60 * 1000)
     marcarPrimeiraVisita()
     expect(siteExpirado()).toBe(false)
     const primeira = Number(localStorage.getItem(CHAVE))

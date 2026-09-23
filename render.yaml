@@ -7,7 +7,7 @@ services:
   - type: web
     name: point-steakhouse-amostra
     env: static
-    buildCommand: cd frontend && npm ci && VITE_AMOSTRA_ONLINE=true VITE_AMOSTRA_EXPIRA_EM="${VITE_AMOSTRA_EXPIRA_EM:-$(node -e 'console.log(new Date(Date.now()+12*3600*1000).toISOString())')}" npm run build:amostra
+    buildCommand: cd frontend && npm ci && VITE_AMOSTRA_ONLINE=true VITE_AMOSTRA_EXPIRA_EM="${VITE_AMOSTRA_EXPIRA_EM:-$(node -e 'console.log(new Date(Date.now()+14*3600*1000).toISOString())')}" npm run build:amostra
     staticPublishPath: ./frontend/dist
     envVars:
       - key: NODE_VERSION
@@ -20,7 +20,7 @@ services:
       # nunca commite: ela é embutida no bundle ofuscado no momento do build.
       - key: VITE_DEMO_SENHA
         sync: false
-      # Opcional: fixe o encerramento (ISO). Vazio = deploy + 12h (calculado
+      # Opcional: fixe o encerramento (ISO). Vazio = deploy + 14h (calculado
       # no buildCommand). A remoção real do ar é manual no dashboard.
       - key: VITE_AMOSTRA_EXPIRA_EM
         sync: false

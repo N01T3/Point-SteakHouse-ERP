@@ -2,13 +2,13 @@
 // (tela de encerrada + login e navegação bloqueados).
 //
 // Precedência do prazo:
-//  1. `VITE_AMOSTRA_EXPIRA_EM` (ISO, ex.: deploy + 12h) — vale para todos.
-//  2. Fallback: primeira visita + 12h (por navegador, via localStorage).
+//  1. `VITE_AMOSTRA_EXPIRA_EM` (ISO, ex.: deploy + 14h) — vale para todos.
+//  2. Fallback: primeira visita + 14h (por navegador, via localStorage).
 //
 // Só vale com `VITE_AMOSTRA_ONLINE === 'true'`.
 // Limites conhecidos: usa o relógio do cliente e o fonte é público — a
 // remoção real do ar exige suspender/excluir o serviço no dashboard do Render.
-export const DURACAO_PADRAO_SITE_MS = 12 * 60 * 60 * 1000
+export const DURACAO_PADRAO_SITE_MS = 14 * 60 * 60 * 1000
 
 const CHAVE_PRIMEIRA_VISITA = 'point_site_primeira_visita'
 
