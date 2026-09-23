@@ -30,7 +30,10 @@ function criarAdaptadorIndexedDB(): AdaptadorChaveValor | null {
       })
     let base: Promise<IDBDatabase> | null = null
     const banco = (): Promise<IDBDatabase> => (base ??= abrir())
-    async function comLoja<T>(modo: IDBTransactionMode, fn: (loja: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+    async function comLoja<T>(
+      modo: IDBTransactionMode,
+      fn: (loja: IDBObjectStore) => IDBRequest<T>,
+    ): Promise<T> {
       const db = await banco()
       return new Promise((resolve, reject) => {
         const tx = db.transaction('kv', modo)

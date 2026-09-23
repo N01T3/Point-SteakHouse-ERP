@@ -124,9 +124,29 @@ export function criarProximasColetasMock(): ProximaColeta[] {
 
 export function criarAuditoriaMock(): RegistroDeAuditoria[] {
   return [
-    { id: 'aud-1', descricao: 'Verificação de CCP: Recebimento de matéria-prima', responsavel: 'Rita Açougueira', registradoEm: horasAtras(2) },
-    { id: 'aud-2', descricao: 'Verificação de CCP: Câmaras frias', responsavel: 'Marcos Caixa', registradoEm: horasAtras(1) },
-    { id: 'aud-3', descricao: 'Coleta microbiológica registrada: Listeria monocytogenes', responsavel: 'Dono', registradoEm: horasAtras(48) },
-    { id: 'aud-4', descricao: 'Verificação de CCP: Coleta de amostras', responsavel: 'Dono', registradoEm: horasAtras(30) },
+    {
+      id: 'aud-1',
+      descricao: 'Verificação de CCP: Recebimento de matéria-prima',
+      responsavel: 'Rita Açougueira',
+      registradoEm: horasAtras(2),
+    },
+    {
+      id: 'aud-2',
+      descricao: 'Verificação de CCP: Câmaras frias',
+      responsavel: 'Marcos Caixa',
+      registradoEm: horasAtras(1),
+    },
+    {
+      id: 'aud-3',
+      descricao: 'Coleta microbiológica registrada: Listeria monocytogenes',
+      responsavel: 'Dono',
+      registradoEm: horasAtras(48),
+    },
+    {
+      id: 'aud-4',
+      descricao: 'Verificação de CCP: Coleta de amostras',
+      responsavel: 'Dono',
+      registradoEm: horasAtras(30),
+    },
   ]
 }

@@ -43,7 +43,12 @@ function interpretarPesoVariavel(codigo: string): CodigoInterpretado {
   const prefixo = codigo.slice(0, 2)
   const produtoCodigo = codigo.slice(2, 7)
   const valor = Number(codigo.slice(7, 12))
-  const base: CodigoInterpretado = { codigo, valido: validarEAN13(codigo), classe: 'peso-variavel-preco', rotulo: '' }
+  const base: CodigoInterpretado = {
+    codigo,
+    valido: validarEAN13(codigo),
+    classe: 'peso-variavel-preco',
+    rotulo: '',
+  }
   if (prefixo === '20') {
     return {
       ...base,

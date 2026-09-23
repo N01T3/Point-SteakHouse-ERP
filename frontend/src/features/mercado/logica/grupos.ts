@@ -55,7 +55,9 @@ function normalizar(valor: string | undefined): string {
 }
 
 /** Resolve grupo/subgrupo com fallback determinístico para dados antigos. */
-export function resolverGrupo(produto: Pick<ProdutoMercado, 'id' | 'nome' | 'categoria' | 'grupo' | 'subgrupo'>): GrupoComercial {
+export function resolverGrupo(
+  produto: Pick<ProdutoMercado, 'id' | 'nome' | 'categoria' | 'grupo' | 'subgrupo'>,
+): GrupoComercial {
   const grupoExplicito = normalizar(produto.grupo)
   const subExplicito = normalizar(produto.subgrupo)
   if (grupoExplicito) {
@@ -68,9 +70,12 @@ export function resolverGrupo(produto: Pick<ProdutoMercado, 'id' | 'nome' | 'cat
   if (porId) return { grupo, subgrupo: porId }
   const nome = produto.nome.toLowerCase()
   if (grupo === 'Carnes') {
-    if (nome.includes('suín') || nome.includes('suin') || nome.includes('porco')) return { grupo, subgrupo: 'Cortes suínos' }
-    if (nome.includes('lingui') || nome.includes('salsich') || nome.includes('toscana')) return { grupo, subgrupo: 'Embutidos' }
-    if (nome.includes('maturad') || nome.includes('dry') || nome.includes('wet')) return { grupo, subgrupo: 'Maturados' }
+    if (nome.includes('suín') || nome.includes('suin') || nome.includes('porco'))
+      return { grupo, subgrupo: 'Cortes suínos' }
+    if (nome.includes('lingui') || nome.includes('salsich') || nome.includes('toscana'))
+      return { grupo, subgrupo: 'Embutidos' }
+    if (nome.includes('maturad') || nome.includes('dry') || nome.includes('wet'))
+      return { grupo, subgrupo: 'Maturados' }
     if (nome.includes('frango') || nome.includes('ave')) return { grupo, subgrupo: 'Aves' }
     return { grupo, subgrupo: 'Cortes bovinos' }
   }
@@ -79,8 +84,16 @@ export function resolverGrupo(produto: Pick<ProdutoMercado, 'id' | 'nome' | 'cat
 }
 
 /** Garante grupo/subgrupo em listas antigas (catálogo local, importação). */
-export function enriquecerProduto<T extends Pick<ProdutoMercado, 'id' | 'nome' | 'categoria' | 'grupo' | 'subgrupo'>>(produto: T): T {
-  const resolvido = resolverGrupo(produto as Pick<ProdutoMercado, 'id' | 'nome' | 'categoria' | 'grupo' | 'subgrupo'>)
+export function enriquecerProduto<
+  T extends Pick<ProdutoMercado, 'id' | 'nome' | 'categoria' | 'grupo' | 'subgrupo'>,
+>(produto: T): T {
+  const resolvido = resolverGrupo(
+    produto as Pick<ProdutoMercado, 'id' | 'nome' | 'categoria' | 'grupo' | 'subgrupo'>,
+  )
   if (produto.grupo && produto.subgrupo) return produto
-  return { ...produto, grupo: produto.grupo || resolvido.grupo, subgrupo: produto.subgrupo || resolvido.subgrupo }
+  return {
+    ...produto,
+    grupo: produto.grupo || resolvido.grupo,
+    subgrupo: produto.subgrupo || resolvido.subgrupo,
+  }
 }

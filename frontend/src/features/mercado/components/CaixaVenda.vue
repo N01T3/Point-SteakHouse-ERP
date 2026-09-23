@@ -2,11 +2,11 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useFormatador } from '../../../shared/composables/useFormatador'
 import { useAuthStore } from '../../auth/store/auth.store'
+import { useClientesStore } from '../../clientes/store/clientes.store'
 import { bloqueioDeVenda, loteParaVenda } from '../logica/mercado'
 import { resolverBipe } from '../logica/resolucaoBipe'
 import { emitirBipe } from '../logica/sinalSonoro'
 import { useMercadoStore } from '../store/mercado.store'
-import { useClientesStore } from '../../clientes/store/clientes.store'
 import type { PagamentoVenda, ProdutoMercado, Venda } from '../tipos'
 import CupomVenda from './CupomVenda.vue'
 import ModalPagamento from './ModalPagamento.vue'
@@ -29,8 +29,8 @@ const descontoAberto = ref<number | null>(null)
 const descontoPercentual = ref<number | null>(null)
 const descontoMotivo = ref('')
 
-const campoBusca = ref<HTMLInputElement | null>(null)
-const campoQtd = ref<HTMLInputElement | null>(null)
+const campoBusca = ref<{ $el?: HTMLElement } | HTMLInputElement | null>(null)
+const campoQtd = ref<{ $el?: HTMLElement } | HTMLInputElement | null>(null)
 let flashTimer: ReturnType<typeof setTimeout> | undefined
 
 const podeDarDesconto = computed(() => auth.temPermissao('mercado.aplicar_desconto'))
@@ -53,14 +53,30 @@ function mostrarFlash(texto: string, tom: 'ok' | 'info' | 'erro'): void {
   }, 3500)
 }
 
+function focarElemento(alvo: { $el?: HTMLElement } | HTMLInputElement | null): void {
+  if (!alvo) return
+  if (alvo instanceof HTMLInputElement) {
+    alvo.focus()
+    return
+  }
+  alvo.$el?.querySelector('input')?.focus()
+}
+
 function focarBusca(): void {
-  void nextTick(() => campoBusca.value?.focus())
+  void nextTick(() => focarElemento(campoBusca.value))
 }
 
 function focarQtd(): void {
   void nextTick(() => {
-    campoQtd.value?.focus()
-    campoQtd.value?.select()
+    const alvo = campoQtd.value
+    if (alvo instanceof HTMLInputElement) {
+      alvo.focus()
+      alvo.select()
+      return
+    }
+    const input = alvo?.$el?.querySelector('input')
+    input?.focus()
+    ;(input as HTMLInputElement | undefined)?.select?.()
   })
 }
 
@@ -225,8 +241,16 @@ function confirmarPagamento(pagamento: PagamentoVenda): void {
     // Fiado usa a mesma conta corrente dos Clientes (fonte única).
     try {
       if (ultimaVenda.value.valorFiado > 0) {
-        const id = ultimaVenda.value.pagamento.clienteId ?? ultimaVenda.value.pagamento.parcelas?.find((p) => p.forma === 'FIADO')?.clienteId
-        if (id) clientesStore.registrarVendaFiado(id, ultimaVenda.value.valorFiado, ultimaVenda.value.numero, ultimaVenda.value.operador)
+        const id =
+          ultimaVenda.value.pagamento.clienteId ??
+          ultimaVenda.value.pagamento.parcelas?.find((p) => p.forma === 'FIADO')?.clienteId
+        if (id)
+          clientesStore.registrarVendaFiado(
+            id,
+            ultimaVenda.value.valorFiado,
+            ultimaVenda.value.numero,
+            ultimaVenda.value.operador,
+          )
       }
     } catch (e) {
       // Venda do turno já foi concluída; divergência de cadastro aparece como aviso.
@@ -245,140 +269,213 @@ function formatarQtd(valor: number, unidade: string): string {
 </script>
 
 <template>
-  <div class="caixa">
-    <div v-if="erro" class="erro" role="alert">{{ erro }}</div>
-    <div v-if="flash" class="flash" :class="flash.tom" role="status">{{ flash.texto }}</div>
-    <button
-      v-if="eanDesconhecido && podeGerenciarProdutos"
-      type="button"
-      class="botao-cadastro"
-      @click="irParaCadastro"
-    >
-      Cadastrar EAN {{ eanDesconhecido }} →
-    </button>
-
-    <div class="coluna">
-      <label class="campo">
-        <span>Bipar ou buscar produto</span>
-        <input
-          ref="campoBusca"
-          v-model="busca"
-          type="text"
-          placeholder="Bipe o código e tecle Enter…"
-          autocomplete="off"
-          autofocus
-          @keydown.enter.prevent="aoEnterBusca"
-          @keydown.esc.prevent="limparBusca"
-        />
-      </label>
-      <div class="ajuda-teclas">Enter confirma o bip · F2 foca o leitor · Esc limpa</div>
-
-      <div v-if="busca.trim()" class="resultados">
-        <button
-          v-for="produto in resultados"
-          :key="produto.id"
-          type="button"
-          class="resultado"
-          :disabled="!!avisoDoProduto(produto)"
-          @click="selecionar(produto)"
+  <div class="m3-grid-pos">
+    <div class="flex flex-col gap-4 min-w-0">
+      <v-alert v-if="erro" type="error" variant="tonal" density="compact" role="alert">{{ erro }}</v-alert>
+      <v-alert
+        v-if="flash"
+        :type="flash.tom === 'erro' ? 'error' : flash.tom === 'ok' ? 'success' : 'info'"
+        variant="tonal"
+        density="compact"
+        role="status"
+        >{{ flash.texto }}</v-alert
+      >
+      <v-btn
+        v-if="eanDesconhecido && podeGerenciarProdutos"
+        color="secondary"
+        variant="tonal"
+        rounded="xl"
+        prepend-icon="mdi-barcode"
+        @click="irParaCadastro"
+      >
+        Cadastrar EAN {{ eanDesconhecido }}
+      </v-btn>
+      <v-card rounded="xl">
+        <v-card-text>
+          <v-text-field
+            ref="campoBusca"
+            v-model="busca"
+            variant="solo-filled"
+            label="Bipar ou buscar produto"
+            placeholder="Bipe o codigo e tecle Enter"
+            prepend-inner-icon="mdi-barcode-scan"
+            clearable
+            hide-details="auto"
+            @keydown.enter.prevent="aoEnterBusca"
+            @keydown.esc.prevent="limparBusca"
+          />
+          <div class="text-caption text-medium-emphasis mt-2">
+            Enter confirma o bip - F2 foca o leitor - Esc limpa
+          </div>
+        </v-card-text>
+      </v-card>
+      <v-card v-if="busca.trim()" rounded="xl">
+        <v-list lines="two">
+          <v-list-item
+            v-for="produto in resultados"
+            :key="produto.id"
+            :disabled="!!avisoDoProduto(produto)"
+            rounded="lg"
+            @click="selecionar(produto)"
+          >
+            <template #prepend><v-icon icon="mdi-package-variant" /></template>
+            <v-list-item-title>{{ produto.nome }}</v-list-item-title>
+            <v-list-item-subtitle
+              >{{ formatarMoeda(produto.preco) }} - lote {{ loteVisivel(produto) }}</v-list-item-subtitle
+            >
+          </v-list-item>
+          <v-list-item v-if="resultados.length === 0"
+            ><v-list-item-title class="text-medium-emphasis"
+              >Nenhum produto encontrado.</v-list-item-title
+            ></v-list-item
+          >
+        </v-list>
+      </v-card>
+      <v-card v-if="selecionado" rounded="xl">
+        <v-card-title class="text-body-1"
+          >{{ selecionado.nome }} - lote {{ loteVisivel(selecionado) }}</v-card-title
         >
-          <span class="resultado-nome">{{ produto.nome }}</span>
-          <span class="resultado-preco">{{ formatarMoeda(produto.preco) }}{{ produto.unidade === 'KG' ? '/kg' : '' }}</span>
-          <span v-if="avisoDoProduto(produto)" class="resultado-aviso">{{ avisoDoProduto(produto) }}</span>
-          <span v-else class="resultado-lote">lote {{ loteVisivel(produto) }}</span>
-        </button>
-        <div v-if="resultados.length === 0" class="sem-resultado">Nenhum produto encontrado.</div>
-      </div>
-
-      <div v-if="selecionado" class="selecao">
-        <div class="selecao-titulo">{{ selecionado.nome }} · lote {{ loteVisivel(selecionado) }}</div>
-        <div class="linha-qtd">
-          <input
+        <v-card-text class="d-flex flex-wrap ga-2">
+          <v-text-field
             ref="campoQtd"
             v-model.number="quantidade"
             type="number"
             min="0"
-            :step="selecionado.unidade === 'KG' ? '0.001' : '1'"
-            :placeholder="selecionado.unidade === 'KG' ? 'Peso (kg)' : 'Qtd'"
-            inputmode="decimal"
+            label="Qtd / Peso"
+            density="comfortable"
+            style="max-width: 180px"
             @keydown.enter.prevent="adicionar"
           />
-          <button v-if="selecionado.unidade === 'KG'" type="button" class="botao-secundario" @click="lerBalanca">
-            Ler balança
-          </button>
-          <button type="button" class="botao-primario" :disabled="quantidade === null" @click="adicionar">
-            Adicionar
-          </button>
-        </div>
-      </div>
-
-      <div v-if="store.suspensas.length > 0" class="suspensas">
-        <div class="secao-titulo">Vendas suspensas</div>
-        <button
-          v-for="suspensa in store.suspensas"
-          :key="suspensa.id"
-          type="button"
-          class="suspensa"
-          @click="retomar(suspensa.id)"
-        >
-          {{ suspensa.rotulo }} · {{ suspensa.itens.length }} itens — retomar
-        </button>
-      </div>
+          <v-btn
+            v-if="selecionado.unidade === 'KG'"
+            variant="outlined"
+            rounded="xl"
+            prepend-icon="mdi-scale"
+            @click="lerBalanca"
+            >Ler balanca</v-btn
+          >
+          <v-btn
+            color="primary"
+            variant="flat"
+            rounded="xl"
+            :disabled="quantidade === null"
+            prepend-icon="mdi-cart-plus"
+            @click="adicionar"
+            >Adicionar</v-btn
+          >
+        </v-card-text>
+      </v-card>
+      <v-card v-if="store.suspensas.length > 0" rounded="xl">
+        <v-card-title class="text-subtitle-1">Vendas suspensas</v-card-title>
+        <v-card-text class="d-flex flex-column ga-2">
+          <v-chip
+            v-for="suspensa in store.suspensas"
+            :key="suspensa.id"
+            variant="outlined"
+            prepend-icon="mdi-pause"
+            @click="retomar(suspensa.id)"
+          >
+            {{ suspensa.rotulo }} - {{ suspensa.itens.length }} itens
+          </v-chip>
+        </v-card-text>
+      </v-card>
     </div>
-
-    <div class="coluna">
-      <div class="carrinho">
-        <div class="secao-titulo">Carrinho</div>
-        <div v-if="store.carrinho.length === 0" class="carrinho-vazio">Carrinho vazio — bipe o primeiro item.</div>
-        <div v-for="(item, indice) in store.carrinho" :key="`${item.produtoId}-${item.lote}-${indice}`" class="linha">
-          <div class="linha-info">
-            <div class="linha-nome">{{ item.nome }}</div>
-            <div class="linha-detalhe">
-              {{ formatarQtd(item.quantidade, item.unidade) }} × {{ formatarMoeda(item.precoUnitario) }} · lote {{ item.lote }}
-            </div>
-            <div v-if="item.descricaoPromo" class="linha-promo">{{ item.descricaoPromo }} (−{{ formatarMoeda(item.descontoPromo) }})</div>
-            <div v-if="item.motivoDesconto" class="linha-promo">Desconto: {{ item.motivoDesconto }} (−{{ formatarMoeda(item.descontoManual) }})</div>
-            <div v-if="descontoAberto === indice" class="desconto-form">
-              <input v-model.number="descontoPercentual" type="number" min="0" max="100" placeholder="% off" />
-              <input v-model="descontoMotivo" type="text" placeholder="Motivo (obrigatório)" />
-              <button type="button" class="botao-secundario" @click="confirmarDesconto(indice)">Aplicar</button>
-            </div>
+    <div class="m3-cart-sticky d-flex flex-column ga-4">
+      <v-card rounded="xl" elevation="2">
+        <v-card-title class="d-flex align-center justify-space-between">
+          <span>Carrinho</span>
+          <v-chip size="small" variant="tonal">{{ store.carrinho.length }} itens</v-chip>
+        </v-card-title>
+        <v-divider />
+        <v-card-text>
+          <div v-if="store.carrinho.length === 0" class="text-body-2 text-medium-emphasis">
+            Carrinho vazio - bipe o primeiro item.
           </div>
-          <div class="linha-acoes">
-            <strong>{{ formatarMoeda(item.quantidade * item.precoUnitario - item.descontoPromo - item.descontoManual) }}</strong>
-            <button
-              v-if="podeDarDesconto"
-              type="button"
-              class="link"
-              @click="descontoAberto = descontoAberto === indice ? null : indice"
-            >
-              desconto
-            </button>
-            <button type="button" class="link" @click="store.removerItem(indice)">remover</button>
-          </div>
-        </div>
-        <div v-if="!podeDarDesconto && store.carrinho.length > 0" class="nota-permissao">
-          Desconto manual requer autorização.
-        </div>
-      </div>
-
-      <div class="total-barra">
-        <div class="total-valores">
-          <span>Descontos: {{ formatarMoeda(store.descontoCarrinho) }}</span>
-          <strong>Total: {{ formatarMoeda(store.totalCarrinho) }}</strong>
-        </div>
-        <div class="total-acoes">
-          <input v-model="rotuloSuspensao" type="text" placeholder="Rótulo (opcional)" class="input-rotulo" />
-          <button type="button" class="botao-secundario" :disabled="store.carrinho.length === 0" @click="suspender">
-            Suspender
-          </button>
-          <button type="button" class="botao-primario" :disabled="store.carrinho.length === 0" @click="mostrarPagamento = true">
-            Pagamento
-          </button>
-        </div>
-      </div>
+          <v-list v-else lines="three">
+            <v-list-item v-for="(item, indice) in store.carrinho" :key="item.produtoId + '-' + indice">
+              <v-list-item-title>{{ item.nome }}</v-list-item-title>
+              <v-list-item-subtitle
+                >{{ formatarQtd(item.quantidade, item.unidade) }} x {{ formatarMoeda(item.precoUnitario) }} -
+                lote {{ item.lote }}</v-list-item-subtitle
+              >
+              <template #append>
+                <div class="d-flex flex-column align-end ga-1">
+                  <strong>{{
+                    formatarMoeda(
+                      item.quantidade * item.precoUnitario - item.descontoPromo - item.descontoManual,
+                    )
+                  }}</strong>
+                  <div class="d-flex ga-1">
+                    <v-btn
+                      v-if="podeDarDesconto"
+                      size="x-small"
+                      variant="text"
+                      @click="descontoAberto = descontoAberto === indice ? null : indice"
+                      >desconto</v-btn
+                    >
+                    <v-btn size="x-small" variant="text" color="error" @click="store.removerItem(indice)"
+                      >remover</v-btn
+                    >
+                  </div>
+                </div>
+              </template>
+              <div v-if="descontoAberto === indice" class="d-flex flex-wrap ga-2 mt-2 w-100">
+                <v-text-field
+                  v-model.number="descontoPercentual"
+                  type="number"
+                  label="% off"
+                  density="compact"
+                  hide-details
+                  style="max-width: 110px"
+                />
+                <v-text-field
+                  v-model="descontoMotivo"
+                  label="Motivo"
+                  density="compact"
+                  hide-details
+                  style="min-width: 160px; flex: 1"
+                />
+                <v-btn size="small" variant="tonal" rounded="lg" @click="confirmarDesconto(indice)"
+                  >Aplicar</v-btn
+                >
+              </div>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+        <v-divider />
+        <v-card-text class="d-flex align-center justify-space-between">
+          <span class="text-body-2">Descontos: {{ formatarMoeda(store.descontoCarrinho) }}</span>
+          <span class="text-h6 font-weight-bold">Total: {{ formatarMoeda(store.totalCarrinho) }}</span>
+        </v-card-text>
+        <v-card-actions class="flex-wrap ga-2">
+          <v-text-field
+            v-model="rotuloSuspensao"
+            label="Rotulo (opcional)"
+            density="compact"
+            hide-details
+            style="min-width: 140px"
+          />
+          <v-btn
+            variant="outlined"
+            rounded="xl"
+            :disabled="store.carrinho.length === 0"
+            prepend-icon="mdi-pause"
+            @click="suspender"
+            >Suspender</v-btn
+          >
+          <v-btn
+            color="primary"
+            variant="flat"
+            rounded="xl"
+            size="large"
+            :disabled="store.carrinho.length === 0"
+            prepend-icon="mdi-cash"
+            @click="mostrarPagamento = true"
+            >Pagamento</v-btn
+          >
+        </v-card-actions>
+      </v-card>
     </div>
-
     <ModalPagamento
       v-if="mostrarPagamento"
       :total="store.totalCarrinho"
@@ -393,353 +490,3 @@ function formatarQtd(valor: number, unidade: string): string {
     />
   </div>
 </template>
-
-<style scoped>
-.caixa {
-  display: grid;
-  grid-template-columns: 1fr 1.2fr;
-  gap: 18px;
-  align-items: start;
-}
-
-@media (max-width: 840px) {
-  .caixa {
-    grid-template-columns: 1fr;
-  }
-}
-
-.coluna {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.erro {
-  grid-column: 1 / -1;
-  font-size: 13px;
-  color: var(--cor-error);
-  background: var(--cor-error-container);
-  border-radius: 10px;
-  padding: 10px 14px;
-}
-
-.flash {
-  grid-column: 1 / -1;
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: 10px;
-  padding: 10px 14px;
-}
-
-.flash.ok {
-  color: var(--cor-success);
-  background: var(--cor-surface-variant);
-}
-
-.flash.info {
-  color: var(--cor-on-primary-container);
-  background: var(--cor-primary-container);
-}
-
-.flash.erro {
-  color: var(--cor-error);
-  background: var(--cor-error-container);
-}
-
-.ajuda-teclas {
-  font-size: 11.5px;
-  color: var(--cor-on-surface-variant);
-}
-
-.botao-cadastro {
-  grid-column: 1 / -1;
-  justify-self: start;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 100px;
-  background: var(--cor-secondary-container, var(--cor-primary-container));
-  color: var(--cor-on-secondary-container, var(--cor-on-primary-container));
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 12.5px;
-  color: var(--cor-on-surface-variant);
-}
-
-.campo input,
-.input-rotulo,
-.desconto-form input {
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid var(--cor-outline);
-  background: var(--cor-surface);
-  color: var(--cor-on-surface);
-  font-family: inherit;
-  font-size: 14px;
-}
-
-.resultados {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.resultado {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2px 10px;
-  text-align: left;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--cor-outline);
-  background: var(--cor-surface);
-  color: var(--cor-on-surface);
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.resultado:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.resultado-nome {
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.resultado-preco {
-  font-size: 13px;
-  color: var(--cor-on-surface-variant);
-}
-
-.resultado-aviso {
-  grid-column: 1 / -1;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--cor-error);
-}
-
-.resultado-lote {
-  grid-column: 1 / -1;
-  font-size: 12px;
-  color: var(--cor-on-surface-variant);
-}
-
-.sem-resultado {
-  font-size: 13px;
-  color: var(--cor-on-surface-variant);
-}
-
-.selecao {
-  background: var(--cor-surface);
-  border: 1px solid var(--cor-outline);
-  border-radius: 12px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.selecao-titulo {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--cor-on-surface);
-}
-
-.linha-qtd {
-  display: flex;
-  gap: 8px;
-}
-
-.linha-qtd input {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid var(--cor-outline);
-  background: var(--cor-bg);
-  color: var(--cor-on-surface);
-  font-family: inherit;
-  font-size: 15px;
-  min-width: 0;
-}
-
-.botao-primario {
-  padding: 12px 18px;
-  border: none;
-  border-radius: 100px;
-  background: var(--cor-primary);
-  color: var(--cor-on-primary);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.botao-primario:disabled,
-.botao-secundario:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.botao-secundario {
-  padding: 12px 16px;
-  border-radius: 100px;
-  border: 1px solid var(--cor-outline);
-  background: var(--cor-surface);
-  color: var(--cor-on-surface);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.suspensas,
-.carrinho {
-  background: var(--cor-surface);
-  border: 1px solid var(--cor-outline);
-  border-radius: 16px;
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.secao-titulo {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--cor-on-surface);
-}
-
-.suspensa {
-  text-align: left;
-  border: 1px dashed var(--cor-outline);
-  background: var(--cor-bg);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-family: inherit;
-  font-size: 13px;
-  color: var(--cor-on-surface);
-  cursor: pointer;
-}
-
-.carrinho-vazio {
-  font-size: 13px;
-  color: var(--cor-on-surface-variant);
-}
-
-.linha {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--cor-outline);
-}
-
-.linha:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.linha-nome {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--cor-on-surface);
-}
-
-.linha-detalhe {
-  font-size: 12.5px;
-  color: var(--cor-on-surface-variant);
-  margin-top: 2px;
-}
-
-.linha-promo {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--cor-success);
-  margin-top: 2px;
-}
-
-.linha-acoes {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  flex-shrink: 0;
-  font-size: 14px;
-  color: var(--cor-on-surface);
-}
-
-.link {
-  background: none;
-  border: none;
-  padding: 0;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--cor-primary);
-  cursor: pointer;
-}
-
-.desconto-form {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.desconto-form input {
-  padding: 8px;
-  font-size: 12.5px;
-  min-width: 0;
-}
-
-.nota-permissao {
-  font-size: 12px;
-  color: var(--cor-on-surface-variant);
-}
-
-.total-barra {
-  position: sticky;
-  bottom: 12px;
-  background: var(--cor-surface);
-  border: 1px solid var(--cor-outline);
-  border-radius: 16px;
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.total-valores {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 13px;
-  color: var(--cor-on-surface-variant);
-}
-
-.total-valores strong {
-  font-family: 'Bodoni Moda', serif;
-  font-size: 24px;
-  color: var(--cor-on-surface);
-}
-
-.total-acoes {
-  display: flex;
-  gap: 8px;
-}
-
-.input-rotulo {
-  flex: 1;
-  min-width: 0;
-}
-</style>

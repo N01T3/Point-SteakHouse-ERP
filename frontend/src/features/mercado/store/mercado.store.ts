@@ -3,6 +3,20 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import {
+  CHAVE_CATALOGO,
+  mesclarCatalogo,
+  serializarCatalogo,
+  validarCatalogoImportado,
+} from '../logica/catalogoPersistido'
+import { interpretarCodigo, validarEAN13 } from '../logica/codigoBarras'
+import { resolverGrupo } from '../logica/grupos'
+import {
+  cadeiaDoLote,
+  criarLancamento,
+  type MovimentoLivro,
+  type TipoMovimentoEstoque,
+} from '../logica/livroMovimentos'
+import {
   arredondar,
   bloqueioDeVenda,
   diasParaVencer,
@@ -10,25 +24,16 @@ import {
   loteVencido,
   podeVenderFiado,
   promocaoDoItem,
+  type SugestaoReposicao,
   subtotalItem,
   sugestaoReposicao,
-  type SugestaoReposicao,
 } from '../logica/mercado'
-import {
-  CHAVE_CATALOGO,
-  mesclarCatalogo,
-  serializarCatalogo,
-  validarCatalogoImportado,
-} from '../logica/catalogoPersistido'
-import { cadeiaDoLote, criarLancamento, type MovimentoLivro, type TipoMovimentoEstoque } from '../logica/livroMovimentos'
-import { resolverGrupo } from '../logica/grupos'
-import { criarBancoLocal } from '../servicos/bancoLocal'
-import { interpretarCodigo, validarEAN13 } from '../logica/codigoBarras'
 import { CLIENTES_FIADO_MOCK, FORNECEDORES_MOCK, PRODUTOS_MOCK, PROMOCOES_MOCK } from '../mock/mercado.mock'
+import { criarBancoLocal } from '../servicos/bancoLocal'
 import type {
   ContagemEstoque,
-  Devolucao,
   DestinoDevolucao,
+  Devolucao,
   Fornecedor,
   ItemCarrinho,
   ItemPedidoCompra,
@@ -117,7 +122,16 @@ export const useMercadoStore = defineStore('mercado', () => {
   /** Livro único de movimentos — auditoria operacional ponta a ponta. */
   const livro = ref<MovimentoLivro[]>([])
   /** Eventos operacionais (venda, desconto, preço, gaveta, reimpressão…). */
-  const eventos = ref<Array<{ id: string; tipo: string; descricao: string; operador: string; online: boolean; criadaEm: string }>>([])
+  const eventos = ref<
+    Array<{
+      id: string
+      tipo: string
+      descricao: string
+      operador: string
+      online: boolean
+      criadaEm: string
+    }>
+  >([])
   /** Banco local (IndexedDB; memória onde não há): catálogo sobrevive ao reload. */
   const banco = criarBancoLocal()
   const catalogoPronto = ref(false)
@@ -191,7 +205,16 @@ export const useMercadoStore = defineStore('mercado', () => {
   /** Lança movimento no livro único (base da rastreabilidade e auditoria). */
   function lancarNoLivro(
     tipo: TipoMovimentoEstoque,
-    args: { produtoId: string; produto: string; lote: string; quantidade: number; custoUnitario?: number; motivo: string; operador: string; referencia?: string },
+    args: {
+      produtoId: string
+      produto: string
+      lote: string
+      quantidade: number
+      custoUnitario?: number
+      motivo: string
+      operador: string
+      referencia?: string
+    },
   ): MovimentoLivro {
     const mov = criarLancamento({
       tipo,
@@ -231,7 +254,11 @@ export const useMercadoStore = defineStore('mercado', () => {
 
   /** Recebe ordem de desossa e gera lotes vendáveis no estoque. */
   function aplicarDesossaAoEstoque(
-    ordem: { pecaBruta: { id: string; fornecedor: string }; saidas: Array<{ nome: string; pesoKg: number; classificacao: string; destino: string | null }>; custoEfetivoPorKg: number },
+    ordem: {
+      pecaBruta: { id: string; fornecedor: string }
+      saidas: Array<{ nome: string; pesoKg: number; classificacao: string; destino: string | null }>
+      custoEfetivoPorKg: number
+    },
     operador: string,
   ): number {
     let criados = 0
@@ -243,7 +270,9 @@ export const useMercadoStore = defineStore('mercado', () => {
         .replace(/[̀-ͯ]/g, '')
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
-      let produto = produtos.value.find((p) => p.id === id || p.nome.toLowerCase() === saida.nome.toLowerCase())
+      let produto = produtos.value.find(
+        (p) => p.id === id || p.nome.toLowerCase() === saida.nome.toLowerCase(),
+      )
       if (!produto) {
         produto = {
           id: id || `corte-${crypto.randomUUID()}`,
@@ -273,7 +302,12 @@ export const useMercadoStore = defineStore('mercado', () => {
         estado: 'LIBERADO',
         local: 'Câmara fria 1',
         custoUnitario: Math.round(ordem.custoEfetivoPorKg * 100) / 100,
-        origem: { tipo: 'desossa', referencia: ordem.pecaBruta.id, fornecedor: ordem.pecaBruta.fornecedor, responsavel: operador },
+        origem: {
+          tipo: 'desossa',
+          referencia: ordem.pecaBruta.id,
+          fornecedor: ordem.pecaBruta.fornecedor,
+          responsavel: operador,
+        },
       })
       produto.custoMedio = Math.round(ordem.custoEfetivoPorKg * 100) / 100
       lancarNoLivro('desossa_saida', {
@@ -307,8 +341,16 @@ export const useMercadoStore = defineStore('mercado', () => {
     peca: { id: string; nome: string; pesoAtualKg: number; custoInicialPorKg: number; pesoInicialKg: number },
     operador: string,
   ): void {
-    const custoKg = peca.pesoAtualKg > 0 ? (peca.pesoInicialKg * peca.custoInicialPorKg) / peca.pesoAtualKg : peca.custoInicialPorKg
-    const id = peca.nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    const custoKg =
+      peca.pesoAtualKg > 0
+        ? (peca.pesoInicialKg * peca.custoInicialPorKg) / peca.pesoAtualKg
+        : peca.custoInicialPorKg
+    const id = peca.nome
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
     let produto = produtos.value.find((p) => p.id === id || p.nome.toLowerCase() === peca.nome.toLowerCase())
     if (!produto) {
       produto = {
@@ -397,11 +439,15 @@ export const useMercadoStore = defineStore('mercado', () => {
   })
 
   const vendasPendentesSinc = computed(() => vendas.value.filter((v) => !v.sincronizada).length)
-  const faturamentoTurno = computed(() => arredondar(vendasValidas.value.reduce((soma, v) => soma + v.total, 0)))
+  const faturamentoTurno = computed(() =>
+    arredondar(vendasValidas.value.reduce((soma, v) => soma + v.total, 0)),
+  )
   const ticketMedio = computed(() =>
     vendasValidas.value.length > 0 ? arredondar(faturamentoTurno.value / vendasValidas.value.length) : 0,
   )
-  const fiadoTurno = computed(() => arredondar(vendasValidas.value.reduce((soma, v) => soma + v.valorFiado, 0)))
+  const fiadoTurno = computed(() =>
+    arredondar(vendasValidas.value.reduce((soma, v) => soma + v.valorFiado, 0)),
+  )
   const kgVendidosTurno = computed(() =>
     arredondar(
       vendasValidas.value
@@ -419,9 +465,23 @@ export const useMercadoStore = defineStore('mercado', () => {
         if (lote.estado !== 'LIBERADO' || lote.quantidade <= 0) continue
         const dias = diasParaVencer(lote.validade, hoje)
         if (dias < 0 || loteVencido(lote, hoje)) {
-          alertas.push({ produtoId: produto.id, produto: produto.nome, lote: lote.lote, quantidade: lote.quantidade, dias, tipo: 'vencido' })
+          alertas.push({
+            produtoId: produto.id,
+            produto: produto.nome,
+            lote: lote.lote,
+            quantidade: lote.quantidade,
+            dias,
+            tipo: 'vencido',
+          })
         } else if (dias <= 3) {
-          alertas.push({ produtoId: produto.id, produto: produto.nome, lote: lote.lote, quantidade: lote.quantidade, dias, tipo: 'proximo' })
+          alertas.push({
+            produtoId: produto.id,
+            produto: produto.nome,
+            lote: lote.lote,
+            quantidade: lote.quantidade,
+            dias,
+            tipo: 'proximo',
+          })
         }
       }
     }
@@ -551,7 +611,10 @@ export const useMercadoStore = defineStore('mercado', () => {
   }
 
   /** Aplica a parte fiada (à vista ou em parcela) e retorna o valor fiado. */
-  function aplicarFiado(clienteId: string | undefined, valor: number): { valorFiado: number; clienteNome: string } {
+  function aplicarFiado(
+    clienteId: string | undefined,
+    valor: number,
+  ): { valorFiado: number; clienteNome: string } {
     const cliente = clientes.value.find((c) => c.id === clienteId)
     if (!cliente) throw new Error('Selecione o cliente do fiado.')
     if (!podeVenderFiado(cliente, valor)) {
@@ -637,7 +700,11 @@ export const useMercadoStore = defineStore('mercado', () => {
         referencia: `venda-${venda.numero}`,
       })
     }
-    auditarEvento('venda', `Venda #${venda.numero} · ${venda.pagamento.forma} · ${venda.total}`, venda.operador)
+    auditarEvento(
+      'venda',
+      `Venda #${venda.numero} · ${venda.pagamento.forma} · ${venda.total}`,
+      venda.operador,
+    )
     carrinho.value = []
     return venda
   }
@@ -668,7 +735,8 @@ export const useMercadoStore = defineStore('mercado', () => {
       })
     }
     if (venda.valorFiado > 0) {
-      const clienteId = venda.pagamento.clienteId ?? venda.pagamento.parcelas?.find((p) => p.forma === 'FIADO')?.clienteId
+      const clienteId =
+        venda.pagamento.clienteId ?? venda.pagamento.parcelas?.find((p) => p.forma === 'FIADO')?.clienteId
       const cliente = clientes.value.find((c) => c.id === clienteId)
       if (cliente) cliente.saldo = arredondar(Math.max(0, cliente.saldo - venda.valorFiado))
     }
@@ -685,7 +753,11 @@ export const useMercadoStore = defineStore('mercado', () => {
     const venda = vendas.value.find((v) => v.id === vendaId)
     if (!venda) throw new Error('Venda não encontrada.')
     venda.reimpressoes = (venda.reimpressoes ?? 0) + 1
-    auditarEvento('reimpressao', `Cupom venda #${venda.numero} reimpresso (${venda.reimpressoes}x)`, venda.operador)
+    auditarEvento(
+      'reimpressao',
+      `Cupom venda #${venda.numero} reimpresso (${venda.reimpressoes}x)`,
+      venda.operador,
+    )
   }
 
   // --- Estoque dedicado: transferências, inventário, fornecedores, pedidos ---
@@ -718,11 +790,18 @@ export const useMercadoStore = defineStore('mercado', () => {
     if (!(quantidade > 0)) throw new Error('Quantidade deve ser maior que zero.')
     if (!motivo.trim() || !operador.trim()) throw new Error('Motivo e operador são obrigatórios.')
     const { produto, linha } = linhaLote(produtoId, loteCodigo, origem)
-    if (quantidade > linha.quantidade) throw new Error(`Saldo insuficiente em ${origem} (${linha.quantidade}).`)
+    if (quantidade > linha.quantidade)
+      throw new Error(`Saldo insuficiente em ${origem} (${linha.quantidade}).`)
     linha.quantidade = arredondar(linha.quantidade - quantidade)
     let destinoLinha = produto.lotes.find((l) => l.lote === loteCodigo && localDoLote(l) === destino)
     if (!destinoLinha) {
-      destinoLinha = { lote: linha.lote, validade: linha.validade, quantidade: 0, estado: linha.estado, local: destino }
+      destinoLinha = {
+        lote: linha.lote,
+        validade: linha.validade,
+        quantidade: 0,
+        estado: linha.estado,
+        local: destino,
+      }
       produto.lotes.push(destinoLinha)
     }
     destinoLinha.quantidade = arredondar(destinoLinha.quantidade + quantidade)
@@ -781,7 +860,11 @@ export const useMercadoStore = defineStore('mercado', () => {
       criadaEm: new Date().toISOString(),
     }
     contagens.value.unshift(contagem)
-    auditarEvento('contagem', `Contagem ${produto.nome} lote ${loteCodigo}: sistema ${sistema} × contado ${contado}`, operador.trim())
+    auditarEvento(
+      'contagem',
+      `Contagem ${produto.nome} lote ${loteCodigo}: sistema ${sistema} × contado ${contado}`,
+      operador.trim(),
+    )
     return contagem
   }
 
@@ -808,7 +891,12 @@ export const useMercadoStore = defineStore('mercado', () => {
     return contagem
   }
 
-  function cadastrarFornecedor(dados: { nome: string; contato?: string; leadTimeDias?: number; pedidoMinimo?: number }): Fornecedor {
+  function cadastrarFornecedor(dados: {
+    nome: string
+    contato?: string
+    leadTimeDias?: number
+    pedidoMinimo?: number
+  }): Fornecedor {
     const nome = dados.nome.trim()
     if (!nome) throw new Error('Nome do fornecedor é obrigatório.')
     if (fornecedores.value.some((f) => f.nome.toLowerCase() === nome.toLowerCase())) {
@@ -837,7 +925,8 @@ export const useMercadoStore = defineStore('mercado', () => {
     const validos = itens.filter((i) => i.quantidade > 0)
     if (validos.length === 0) throw new Error('Pedido precisa de ao menos um item com quantidade.')
     for (const item of validos) {
-      if (!produtos.value.some((p) => p.id === item.produtoId)) throw new Error(`Produto ${item.produto} não existe.`)
+      if (!produtos.value.some((p) => p.id === item.produtoId))
+        throw new Error(`Produto ${item.produto} não existe.`)
     }
     const pedido: PedidoCompra = {
       id: `ped-${crypto.randomUUID()}`,
@@ -871,7 +960,12 @@ export const useMercadoStore = defineStore('mercado', () => {
       })
       .map((r) => {
         const produto = produtos.value.find((p) => p.id === r.produtoId)
-        return { produtoId: r.produtoId, produto: r.produto, quantidade: r.sugestao, custoUnitario: produto?.custoMedio ?? 0 }
+        return {
+          produtoId: r.produtoId,
+          produto: r.produto,
+          quantidade: r.sugestao,
+          custoUnitario: produto?.custoMedio ?? 0,
+        }
       })
     if (itens.length === 0) throw new Error('Sem itens de reposição para este fornecedor.')
     return criarPedido(fornecedorId, itens, operador)
@@ -891,12 +985,18 @@ export const useMercadoStore = defineStore('mercado', () => {
         criadaEm: v.criadaEm,
         operador: v.operador,
         clienteNome: v.pagamento.clienteNome,
-        quantidade: arredondar(v.itens.filter((item) => item.lote === busca).reduce((soma, i) => soma + i.quantidade, 0)),
+        quantidade: arredondar(
+          v.itens.filter((item) => item.lote === busca).reduce((soma, i) => soma + i.quantidade, 0),
+        ),
       }))
     return {
       produto: achado?.produto.nome,
       validade: achado?.linhas[0]?.validade,
-      estoquePorLocal: (achado?.linhas ?? []).map((l) => ({ local: localDoLote(l), quantidade: l.quantidade, estado: l.estado })),
+      estoquePorLocal: (achado?.linhas ?? []).map((l) => ({
+        local: localDoLote(l),
+        quantidade: l.quantidade,
+        estado: l.estado,
+      })),
       vendas: vendasAfetadas,
     }
   }
@@ -924,7 +1024,11 @@ export const useMercadoStore = defineStore('mercado', () => {
     const venda = vendas.value.find((v) => v.id === vendaId)
     if (!venda) throw new Error('Venda não encontrada.')
     if (!motivo.trim()) throw new Error('Devolução exige motivo.')
-    const mapa = (devolvidos.value[vendaId] ??= {})
+    let mapa = devolvidos.value[vendaId]
+    if (!mapa) {
+      mapa = {}
+      devolvidos.value[vendaId] = mapa
+    }
     const itensDevolvidos: Devolucao['itens'] = []
 
     for (const pedido of itens) {
@@ -936,7 +1040,14 @@ export const useMercadoStore = defineStore('mercado', () => {
         throw new Error(`Quantidade devolvida de ${original.nome} excede o vendido.`)
       }
       mapa[pedido.produtoId] = arredondar(jaDevolvido + pedido.quantidade)
-      const valorUnitario = arredondar(subtotalItem(original.quantidade, original.precoUnitario, original.descontoPromo, original.descontoManual) / original.quantidade)
+      const valorUnitario = arredondar(
+        subtotalItem(
+          original.quantidade,
+          original.precoUnitario,
+          original.descontoPromo,
+          original.descontoManual,
+        ) / original.quantidade,
+      )
       itensDevolvidos.push({
         produtoId: original.produtoId,
         nome: original.nome,
@@ -958,7 +1069,11 @@ export const useMercadoStore = defineStore('mercado', () => {
           referencia: `venda-${venda.numero}`,
         })
       } else {
-        auditarEvento('devolucao', `Devolução venda #${venda.numero} → ${destino}: ${motivo.trim()} (sem retorno ao saldo)`, operador)
+        auditarEvento(
+          'devolucao',
+          `Devolução venda #${venda.numero} → ${destino}: ${motivo.trim()} (sem retorno ao saldo)`,
+          operador,
+        )
       }
     }
     if (itensDevolvidos.length === 0) throw new Error('Informe ao menos um item para devolver.')
@@ -1043,7 +1158,9 @@ export const useMercadoStore = defineStore('mercado', () => {
       const interpretado = interpretarCodigo(codigoBarras)
       if (!interpretado.valido) throw new Error(`Código inválido: ${interpretado.rotulo}.`)
       if (interpretado.classe !== 'gtin-brasil' && interpretado.classe !== 'gtin-externo') {
-        throw new Error('Cadastro exige GTIN-13 (EAN-13) válido — etiqueta de balança e PLU entram nos campos próprios.')
+        throw new Error(
+          'Cadastro exige GTIN-13 (EAN-13) válido — etiqueta de balança e PLU entram nos campos próprios.',
+        )
       }
       if (!validarEAN13(codigoBarras)) throw new Error('Dígito verificador do EAN-13 não confere.')
       if (produtos.value.some((p) => p.codigoBarras === codigoBarras)) {
@@ -1055,15 +1172,16 @@ export const useMercadoStore = defineStore('mercado', () => {
       if (!/^\d{1,6}$/.test(plu)) throw new Error('PLU deve ter de 1 a 6 dígitos.')
       if (produtos.value.some((p) => p.plu === plu)) throw new Error('Este PLU já está cadastrado.')
     }
-    if (!codigoBarras && !plu) throw new Error('Informe ao menos EAN-13 ou PLU para identificar o produto no caixa.')
+    if (!codigoBarras && !plu)
+      throw new Error('Informe ao menos EAN-13 ou PLU para identificar o produto no caixa.')
 
-    const id = nome
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      || `produto-${crypto.randomUUID()}`
+    const id =
+      nome
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '') || `produto-${crypto.randomUUID()}`
     if (produtos.value.some((p) => p.id === id)) throw new Error('Já existe um produto com nome equivalente.')
 
     const categoria = dados.categoria.trim() || 'Geral'
@@ -1113,7 +1231,8 @@ export const useMercadoStore = defineStore('mercado', () => {
   }
 
   function criarPromocao(dados: Omit<Promocao, 'id'>): Promocao {
-    if (!(dados.percentual > 0 && dados.percentual <= 100)) throw new Error('Percentual deve estar entre 0 e 100.')
+    if (!(dados.percentual > 0 && dados.percentual <= 100))
+      throw new Error('Percentual deve estar entre 0 e 100.')
     if (!dados.descricao.trim()) throw new Error('Descrição é obrigatória.')
     const promocao: Promocao = { ...dados, id: `promo-${crypto.randomUUID()}` }
     promocoes.value.unshift(promocao)
@@ -1187,13 +1306,24 @@ export const useMercadoStore = defineStore('mercado', () => {
       estado: dados.divergencia?.trim() ? 'QUARENTENA' : 'LIBERADO',
       motivoBloqueio: dados.divergencia?.trim() || undefined,
       custoUnitario: dados.custoUnitario,
-      origem: { tipo: 'compra', referencia: dados.pedidoId, fornecedor: dados.fornecedor.trim() || produto.fornecedor, responsavel: operador },
+      origem: {
+        tipo: 'compra',
+        referencia: dados.pedidoId,
+        fornecedor: dados.fornecedor.trim() || produto.fornecedor,
+        responsavel: operador,
+      },
     })
     // Custo médio ponderado: recalcula a partir do estoque anterior + entrada.
-    const estoqueAnterior = produto.lotes.filter((l) => l.lote !== dados.lote.trim()).reduce((s, l) => s + l.quantidade, 0)
+    const estoqueAnterior = produto.lotes
+      .filter((l) => l.lote !== dados.lote.trim())
+      .reduce((s, l) => s + l.quantidade, 0)
     if (dados.custoUnitario > 0 && estoqueAnterior + dados.quantidade > 0) {
       const valorAnterior = estoqueAnterior * produto.custoMedio
-      produto.custoMedio = Math.round(((valorAnterior + dados.quantidade * dados.custoUnitario) / (estoqueAnterior + dados.quantidade)) * 100) / 100
+      produto.custoMedio =
+        Math.round(
+          ((valorAnterior + dados.quantidade * dados.custoUnitario) / (estoqueAnterior + dados.quantidade)) *
+            100,
+        ) / 100
     }
     if (dados.pedidoId) {
       const pedido = pedidos.value.find((p) => p.id === dados.pedidoId)
@@ -1221,7 +1351,9 @@ export const useMercadoStore = defineStore('mercado', () => {
       lote: recebimento.lote,
       quantidade: Math.round(recebimento.quantidade * 1000) / 1000,
       custoUnitario: recebimento.custoUnitario,
-      motivo: recebimento.divergencia ? `Recebimento com divergência → quarentena: ${recebimento.divergencia}` : `Recebimento ${recebimento.fornecedor}`,
+      motivo: recebimento.divergencia
+        ? `Recebimento com divergência → quarentena: ${recebimento.divergencia}`
+        : `Recebimento ${recebimento.fornecedor}`,
       operador,
       referencia: recebimento.id,
     })
@@ -1230,7 +1362,12 @@ export const useMercadoStore = defineStore('mercado', () => {
   }
 
   /** Libera lote em quarentena após conferência. */
-  function liberarQuarentena(produtoId: string, loteCodigo: string, operador: string, motivo = 'Conferência aprovada'): void {
+  function liberarQuarentena(
+    produtoId: string,
+    loteCodigo: string,
+    operador: string,
+    motivo = 'Conferência aprovada',
+  ): void {
     const produto = produtos.value.find((p) => p.id === produtoId)
     const lote = produto?.lotes.find((l) => l.lote === loteCodigo)
     if (!produto || !lote) throw new Error('Lote não encontrado.')
@@ -1275,12 +1412,23 @@ export const useMercadoStore = defineStore('mercado', () => {
     if (!turnoAberto.value) abrirTurno(200, operador)
     const criadas: Venda[] = []
     // Roteiro distribuído em horários distintos para alimentar o relatório por hora.
-    const roteiro: Array<{ produtoId: string; quantidade: number; pagamento: PagamentoVenda; hora: number }> = [
-      { produtoId: 'picanha', quantidade: 1.2, pagamento: { forma: 'DINHEIRO', valorRecebido: 10000 }, hora: 9 },
-      { produtoId: 'fraldinha', quantidade: 2, pagamento: { forma: 'PIX' }, hora: 12 },
-      { produtoId: 'carvao', quantidade: 4, pagamento: { forma: 'CARTAO' }, hora: 15 },
-      { produtoId: 'ancho', quantidade: 1, pagamento: { forma: 'FIADO', clienteId: 'cli-bruno' }, hora: 18 },
-    ]
+    const roteiro: Array<{ produtoId: string; quantidade: number; pagamento: PagamentoVenda; hora: number }> =
+      [
+        {
+          produtoId: 'picanha',
+          quantidade: 1.2,
+          pagamento: { forma: 'DINHEIRO', valorRecebido: 10000 },
+          hora: 9,
+        },
+        { produtoId: 'fraldinha', quantidade: 2, pagamento: { forma: 'PIX' }, hora: 12 },
+        { produtoId: 'carvao', quantidade: 4, pagamento: { forma: 'CARTAO' }, hora: 15 },
+        {
+          produtoId: 'ancho',
+          quantidade: 1,
+          pagamento: { forma: 'FIADO', clienteId: 'cli-bruno' },
+          hora: 18,
+        },
+      ]
     for (const passo of roteiro) {
       adicionarProduto(passo.produtoId, passo.quantidade)
       const venda = finalizarVenda(passo.pagamento)

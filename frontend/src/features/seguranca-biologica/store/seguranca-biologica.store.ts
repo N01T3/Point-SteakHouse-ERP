@@ -1,13 +1,20 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import {
+  type AcaoCorretiva,
+  type ChecklistSanitario,
+  criarChecklist,
+  type RegistroTemperatura,
+  type TurnoChecklist,
+  validarTemperatura,
+} from '../logica/checklists'
+import {
   criarAuditoriaMock,
   criarCcpsMock,
   criarColetasMock,
   criarItensNaGeladeiraMock,
   criarProximasColetasMock,
 } from '../mocks/seguranca-biologica.mock'
-import { criarChecklist, validarTemperatura, type AcaoCorretiva, type ChecklistSanitario, type RegistroTemperatura, type TurnoChecklist } from '../logica/checklists'
 
 export const useSegurancaBiologicaStore = defineStore('seguranca-biologica', () => {
   const ccps = ref(criarCcpsMock())
@@ -47,7 +54,12 @@ export const useSegurancaBiologicaStore = defineStore('seguranca-biologica', () 
     })
   }
 
-  function registrarChecklist(turno: TurnoChecklist, estados: boolean[], responsavel: string, observacao?: string): ChecklistSanitario {
+  function registrarChecklist(
+    turno: TurnoChecklist,
+    estados: boolean[],
+    responsavel: string,
+    observacao?: string,
+  ): ChecklistSanitario {
     const chk = criarChecklist(turno, responsavel, estados, observacao)
     checklists.value.unshift(chk)
     auditoria.value.unshift({
@@ -59,7 +71,12 @@ export const useSegurancaBiologicaStore = defineStore('seguranca-biologica', () 
     return chk
   }
 
-  function registrarTemperatura(local: string, temperatura: number, responsavel: string, umidade?: number): RegistroTemperatura {
+  function registrarTemperatura(
+    local: string,
+    temperatura: number,
+    responsavel: string,
+    umidade?: number,
+  ): RegistroTemperatura {
     const erro = validarTemperatura(local, temperatura, responsavel)
     if (erro) throw new Error(erro)
     const reg: RegistroTemperatura = {

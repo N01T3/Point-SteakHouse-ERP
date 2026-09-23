@@ -1,7 +1,8 @@
 // Resolução do bip do leitor (scanner USB/Bluetooth age como teclado + Enter).
 // Pura e testável: recebe o texto e o catálogo, diz o que o caixa deve fazer.
-import { interpretarCodigo } from './codigoBarras'
+
 import type { ProdutoMercado } from '../tipos'
+import { interpretarCodigo } from './codigoBarras'
 
 export type ResolucaoBipe =
   | { tipo: 'adicionar'; produtoId: string; quantidade: number; origem: string }
@@ -56,10 +57,19 @@ export function resolverBipe(entrada: string, produtos: ProdutoMercado[]): Resol
   if (interpretado.classe === 'peso-variavel-peso') {
     const produto = porPlu(produtos, interpretado.produtoCodigo ?? '')
     if (!produto) return { tipo: 'erro', mensagem: 'PLU da etiqueta não cadastrado — confira o cadastro.' }
-    if (produto.unidade !== 'KG' || interpretado.pesoEmbutidoKg === undefined || !(interpretado.pesoEmbutidoKg > 0)) {
+    if (
+      produto.unidade !== 'KG' ||
+      interpretado.pesoEmbutidoKg === undefined ||
+      !(interpretado.pesoEmbutidoKg > 0)
+    ) {
       return { tipo: 'erro', mensagem: 'Etiqueta de peso só vale para item vendido por peso.' }
     }
-    return { tipo: 'adicionar', produtoId: produto.id, quantidade: interpretado.pesoEmbutidoKg, origem: `etiqueta ${produto.nome}` }
+    return {
+      tipo: 'adicionar',
+      produtoId: produto.id,
+      quantidade: interpretado.pesoEmbutidoKg,
+      origem: `etiqueta ${produto.nome}`,
+    }
   }
 
   // PLU / código interno

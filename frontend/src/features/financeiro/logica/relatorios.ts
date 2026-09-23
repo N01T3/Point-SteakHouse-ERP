@@ -1,8 +1,9 @@
 // Relatórios gerenciais do açougue/mercado — puros e testáveis.
 // Fonte: vendas reais + catálogo (grupo/subgrupo com snapshot no item).
 // Canceladas saem do faturamento, mas contam na auditoria.
-import { arredondar } from '../../mercado/logica/mercado'
+
 import { resolverGrupo } from '../../mercado/logica/grupos'
+import { arredondar } from '../../mercado/logica/mercado'
 import type { Devolucao, PerdaMercado, ProdutoMercado, Venda } from '../../mercado/tipos'
 
 export interface FiltroRelatorio {
@@ -140,7 +141,20 @@ export function relatorioPorGrupo(vendas: Venda[], produtos: ProdutoMercado[]): 
     const chave = `${item.grupo}||${item.subgrupo}`
     let linha = mapa.get(chave)
     if (!linha) {
-      linha = { grupo: item.grupo, subgrupo: item.subgrupo, receita: 0, quantidade: 0, cmv: 0, lucro: 0, margem: null, desconto: 0, vendas: 0, participacao: 0, classeABC: 'C', vendasSet: new Set() }
+      linha = {
+        grupo: item.grupo,
+        subgrupo: item.subgrupo,
+        receita: 0,
+        quantidade: 0,
+        cmv: 0,
+        lucro: 0,
+        margem: null,
+        desconto: 0,
+        vendas: 0,
+        participacao: 0,
+        classeABC: 'C',
+        vendasSet: new Set(),
+      }
       mapa.set(chave, linha)
     }
     linha.receita = arredondar(linha.receita + item.receita)
@@ -192,8 +206,17 @@ export function margemRealPorProduto(vendas: Venda[], produtos: ProdutoMercado[]
   const mapa = new Map<string, LinhaProdutoReal>()
   for (const item of itens) {
     const atual = mapa.get(item.produtoId) ?? {
-      produtoId: item.produtoId, produto: item.produto, grupo: item.grupo, subgrupo: item.subgrupo,
-      receita: 0, quantidade: 0, cmv: 0, lucro: 0, margem: null, participacao: 0, classeABC: 'C' as const,
+      produtoId: item.produtoId,
+      produto: item.produto,
+      grupo: item.grupo,
+      subgrupo: item.subgrupo,
+      receita: 0,
+      quantidade: 0,
+      cmv: 0,
+      lucro: 0,
+      margem: null,
+      participacao: 0,
+      classeABC: 'C' as const,
     }
     atual.receita = arredondar(atual.receita + item.receita)
     atual.quantidade = arredondar(atual.quantidade + item.quantidade)
@@ -206,7 +229,12 @@ export function margemRealPorProduto(vendas: Venda[], produtos: ProdutoMercado[]
   let acumulado = 0
   return linhas.map((l) => {
     acumulado += total > 0 ? l.receita / total : 0
-    return { ...l, margem: l.receita > 0 ? l.lucro / l.receita : null, participacao: total > 0 ? l.receita / total : 0, classeABC: (acumulado <= 0.7 ? 'A' : acumulado <= 0.9 ? 'B' : 'C') as 'A' | 'B' | 'C' }
+    return {
+      ...l,
+      margem: l.receita > 0 ? l.lucro / l.receita : null,
+      participacao: total > 0 ? l.receita / total : 0,
+      classeABC: (acumulado <= 0.7 ? 'A' : acumulado <= 0.9 ? 'B' : 'C') as 'A' | 'B' | 'C',
+    }
   })
 }
 
@@ -227,7 +255,16 @@ export interface LinhaHora {
 export function relatorioPorHora(vendas: Venda[], produtos: ProdutoMercado[]): LinhaHora[] {
   const mapa = mapaProdutos(produtos)
   const linhas: LinhaHora[] = Array.from({ length: 24 }, (_, hora) => ({
-    hora, vendas: 0, receita: 0, ticketMedio: null, quantidade: 0, cmv: 0, lucro: 0, margem: null, desconto: 0, cancelamentos: 0,
+    hora,
+    vendas: 0,
+    receita: 0,
+    ticketMedio: null,
+    quantidade: 0,
+    cmv: 0,
+    lucro: 0,
+    margem: null,
+    desconto: 0,
+    cancelamentos: 0,
   }))
   for (const venda of vendas) {
     const hora = horaDeVenda(venda.criadaEm)
@@ -266,7 +303,14 @@ export interface LinhaOperador {
 export function relatorioPorOperador(vendas: Venda[]): LinhaOperador[] {
   const mapa = new Map<string, LinhaOperador>()
   for (const venda of vendas) {
-    const atual = mapa.get(venda.operador) ?? { operador: venda.operador, vendas: 0, receita: 0, ticketMedio: null, desconto: 0, cancelamentos: 0 }
+    const atual = mapa.get(venda.operador) ?? {
+      operador: venda.operador,
+      vendas: 0,
+      receita: 0,
+      ticketMedio: null,
+      desconto: 0,
+      cancelamentos: 0,
+    }
     if (venda.estado === 'CANCELADA') {
       atual.cancelamentos += 1
     } else {
@@ -291,7 +335,12 @@ export interface LinhaPagamento {
 export function relatorioPorPagamento(vendas: Venda[]): LinhaPagamento[] {
   const mapa = new Map<string, LinhaPagamento>()
   for (const venda of vendasValidas(vendas)) {
-    const atual = mapa.get(venda.pagamento.forma) ?? { forma: venda.pagamento.forma, vendas: 0, receita: 0, participacao: 0 }
+    const atual = mapa.get(venda.pagamento.forma) ?? {
+      forma: venda.pagamento.forma,
+      vendas: 0,
+      receita: 0,
+      participacao: 0,
+    }
     atual.vendas += 1
     atual.receita = arredondar(atual.receita + venda.total)
     mapa.set(venda.pagamento.forma, atual)
@@ -314,7 +363,14 @@ export function relatorioPorFornecedor(vendas: Venda[], produtos: ProdutoMercado
   const itens = enriquecerItens(vendasValidas(vendas), produtos)
   const mapa = new Map<string, LinhaFornecedor>()
   for (const item of itens) {
-    const atual = mapa.get(item.fornecedor) ?? { fornecedor: item.fornecedor, receita: 0, cmv: 0, lucro: 0, margem: null, itens: 0 }
+    const atual = mapa.get(item.fornecedor) ?? {
+      fornecedor: item.fornecedor,
+      receita: 0,
+      cmv: 0,
+      lucro: 0,
+      margem: null,
+      itens: 0,
+    }
     atual.receita = arredondar(atual.receita + item.receita)
     atual.cmv = arredondar(atual.cmv + item.cmv)
     atual.lucro = arredondar(atual.lucro + item.lucro)
@@ -340,7 +396,12 @@ export function perdasPorGrupo(perdas: PerdaMercado[], produtos: ProdutoMercado[
     const produto = mapa.get(perda.produtoId)
     const comercial = produto ? resolverGrupo(produto) : { grupo: 'Geral', subgrupo: 'Geral' }
     const chave = `${comercial.grupo}||${comercial.subgrupo}`
-    const atual = agregado.get(chave) ?? { grupo: comercial.grupo, subgrupo: comercial.subgrupo, valor: 0, quantidade: 0 }
+    const atual = agregado.get(chave) ?? {
+      grupo: comercial.grupo,
+      subgrupo: comercial.subgrupo,
+      valor: 0,
+      quantidade: 0,
+    }
     atual.valor = arredondar(atual.valor + perda.valor)
     atual.quantidade = arredondar(atual.quantidade + perda.quantidade)
     agregado.set(chave, atual)
@@ -363,7 +424,9 @@ export function resumirAuditoria(vendas: Venda[], devolucoes: Devolucao[]): Resu
     vendasValidas: vendas.filter((v) => v.estado !== 'CANCELADA').length,
     canceladas: vendas.filter((v) => v.estado === 'CANCELADA').length,
     devolvidas: devolucoes.length,
-    descontoTotal: arredondar(vendas.filter((v) => v.estado !== 'CANCELADA').reduce((s, v) => s + v.descontoTotal, 0)),
+    descontoTotal: arredondar(
+      vendas.filter((v) => v.estado !== 'CANCELADA').reduce((s, v) => s + v.descontoTotal, 0),
+    ),
     reimpressoes: vendas.reduce((s, v) => s + (v.reimpressoes ?? 0), 0),
     divergenciasCaixa: 0,
   }

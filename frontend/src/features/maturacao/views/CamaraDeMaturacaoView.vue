@@ -4,6 +4,8 @@ import BadgeStatus from '../../../shared/components/BadgeStatus.vue'
 import BarraDeProgresso from '../../../shared/components/BarraDeProgresso.vue'
 import Modal from '../../../shared/components/Modal.vue'
 import { useFormatador } from '../../../shared/composables/useFormatador'
+import { useAuthStore } from '../../auth/store/auth.store'
+import { useMercadoStore } from '../../mercado/store/mercado.store'
 import {
   custoAtualPorKg,
   desvioSignificativo,
@@ -12,9 +14,7 @@ import {
   pesoProjetadoKg,
 } from '../logica/projecao-de-evaporacao'
 import { useMaturacaoStore } from '../store/maturacao.store'
-import { useMercadoStore } from '../../mercado/store/mercado.store'
-import { useAuthStore } from '../../auth/store/auth.store'
-import { NOMES_TECNICA, type Camara, type PecaEmMaturacao } from '../types'
+import { type Camara, NOMES_TECNICA, type PecaEmMaturacao } from '../types'
 
 const store = useMaturacaoStore()
 const mercado = useMercadoStore()
@@ -36,11 +36,17 @@ const nPesoAtual = ref<Record<string, number | null>>({})
 function iniciar(): void {
   erro.value = ''
   try {
-    if (nPeso.value === null || nDias.value === null || nCusto.value === null) throw new Error('Informe peso, prazo e custo.')
+    if (nPeso.value === null || nDias.value === null || nCusto.value === null)
+      throw new Error('Informe peso, prazo e custo.')
     store.iniciarMaturacao({
-      nome: nNome.value, tecnica: nTecnica.value, camaraId: nCamara.value,
-      pesoInicialKg: nPeso.value, diasTotal: nDias.value, custoInicialPorKg: nCusto.value,
-      loteOrigem: nLote.value, responsavel: auth.usuario?.nome,
+      nome: nNome.value,
+      tecnica: nTecnica.value,
+      camaraId: nCamara.value,
+      pesoInicialKg: nPeso.value,
+      diasTotal: nDias.value,
+      custoInicialPorKg: nCusto.value,
+      loteOrigem: nLote.value,
+      responsavel: auth.usuario?.nome,
     })
     nNome.value = ''
     nPeso.value = null
@@ -64,7 +70,9 @@ function salvarPeso(pecaId: string): void {
 }
 
 const pecaSelecionadaId = ref<string | null>(null)
-const pecaSelecionada = computed(() => store.pecas.find((peca) => peca.id === pecaSelecionadaId.value) ?? null)
+const pecaSelecionada = computed(
+  () => store.pecas.find((peca) => peca.id === pecaSelecionadaId.value) ?? null,
+)
 
 function camaraDaPeca(peca: PecaEmMaturacao): Camara | undefined {
   return store.camaras.find((camara) => camara.id === peca.camaraId)
@@ -102,19 +110,47 @@ function finalizarPeca(pecaId: string): void {
 
     <div class="cartao-camara cartao-form">
       <div class="secao-titulo">Iniciar maturação — a partir de lote recebido</div>
-      <div class="nota">A peça sai do estoque pelo lote de origem e entra na câmara com custo e prazo controlados.</div>
+      <div class="nota">
+        A peça sai do estoque pelo lote de origem e entra na câmara com custo e prazo controlados.
+      </div>
       <div class="form-grade">
-        <label class="campo"><span>Peça</span><input v-model="nNome" type="text" placeholder="ex.: Ancho Angus" /></label>
-        <label class="campo"><span>Técnica</span><select v-model="nTecnica"><option value="dry_aged">Dry aged</option><option value="wet_aged">Wet aged</option></select></label>
-        <label class="campo"><span>Câmara</span><select v-model="nCamara"><option v-for="c in store.camaras" :key="c.id" :value="c.id">{{ c.nome }}</option></select></label>
-        <label class="campo"><span>Peso inicial (kg)</span><input v-model.number="nPeso" type="number" min="0" step="0.01" placeholder="0,00" /></label>
-        <label class="campo"><span>Prazo (dias)</span><input v-model.number="nDias" type="number" min="1" step="1" placeholder="30" /></label>
-        <label class="campo"><span>Custo/kg (R$)</span><input v-model.number="nCusto" type="number" min="0" step="0.01" placeholder="0,00" /></label>
-        <label class="campo"><span>Lote origem</span><input v-model="nLote" type="text" placeholder="L…" /></label>
+        <label class="campo"
+          ><span>Peça</span><input v-model="nNome" type="text" placeholder="ex.: Ancho Angus"
+        /></label>
+        <label class="campo"
+          ><span>Técnica</span
+          ><select v-model="nTecnica">
+            <option value="dry_aged">Dry aged</option>
+            <option value="wet_aged">Wet aged</option>
+          </select></label
+        >
+        <label class="campo"
+          ><span>Câmara</span
+          ><select v-model="nCamara">
+            <option v-for="c in store.camaras" :key="c.id" :value="c.id">{{ c.nome }}</option>
+          </select></label
+        >
+        <label class="campo"
+          ><span>Peso inicial (kg)</span
+          ><input v-model.number="nPeso" type="number" min="0" step="0.01" placeholder="0,00"
+        /></label>
+        <label class="campo"
+          ><span>Prazo (dias)</span
+          ><input v-model.number="nDias" type="number" min="1" step="1" placeholder="30"
+        /></label>
+        <label class="campo"
+          ><span>Custo/kg (R$)</span
+          ><input v-model.number="nCusto" type="number" min="0" step="0.01" placeholder="0,00"
+        /></label>
+        <label class="campo"
+          ><span>Lote origem</span><input v-model="nLote" type="text" placeholder="L…"
+        /></label>
       </div>
       <div class="acoes-linha">
         <button class="botao-primario" type="button" @click="iniciar">Iniciar maturação</button>
-        <span v-if="store.pecasFinalizadas.length" class="nota">{{ store.pecasFinalizadas.length }} finalizada(s) no histórico.</span>
+        <span v-if="store.pecasFinalizadas.length" class="nota"
+          >{{ store.pecasFinalizadas.length }} finalizada(s) no histórico.</span
+        >
       </div>
     </div>
 
@@ -127,8 +163,16 @@ function finalizarPeca(pecaId: string): void {
           </BadgeStatus>
         </div>
         <div class="camara-medidas">
-          <span>{{ camara.temperaturaAtual }}°C (ideal {{ camara.temperaturaIdealMin }}–{{ camara.temperaturaIdealMax }}°C)</span>
-          <span>{{ camara.umidadeAtual }}% UR (ideal {{ camara.umidadeIdealMin }}–{{ camara.umidadeIdealMax }}%)</span>
+          <span
+            >{{ camara.temperaturaAtual }}°C (ideal {{ camara.temperaturaIdealMin }}–{{
+              camara.temperaturaIdealMax
+            }}°C)</span
+          >
+          <span
+            >{{ camara.umidadeAtual }}% UR (ideal {{ camara.umidadeIdealMin }}–{{
+              camara.umidadeIdealMax
+            }}%)</span
+          >
         </div>
       </div>
     </div>
@@ -187,8 +231,17 @@ function finalizarPeca(pecaId: string): void {
       <div class="detalhe-linha pesagem">
         <span>Registrar pesagem</span>
         <span class="pesagem-controles">
-          <input v-model.number="nPesoAtual[pecaSelecionada.id]" type="number" min="0" step="0.01" placeholder="kg atual" aria-label="Peso atual em kg" />
-          <button type="button" class="botao-secundario" @click="salvarPeso(pecaSelecionada.id)">Salvar</button>
+          <input
+            v-model.number="nPesoAtual[pecaSelecionada.id]"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="kg atual"
+            aria-label="Peso atual em kg"
+          />
+          <button type="button" class="botao-secundario" @click="salvarPeso(pecaSelecionada.id)">
+            Salvar
+          </button>
         </span>
       </div>
       <div v-if="desvioSignificativo(pecaSelecionada)" class="aviso-desvio">
@@ -200,7 +253,11 @@ function finalizarPeca(pecaId: string): void {
         :disabled="!estaProntaParaFinalizar(pecaSelecionada)"
         @click="finalizarPeca(pecaSelecionada.id)"
       >
-        {{ estaProntaParaFinalizar(pecaSelecionada) ? 'Finalizar maturação' : 'Ainda não atingiu o tempo mínimo' }}
+        {{
+          estaProntaParaFinalizar(pecaSelecionada)
+            ? 'Finalizar maturação'
+            : 'Ainda não atingiu o tempo mínimo'
+        }}
       </button>
     </Modal>
   </div>
@@ -221,7 +278,7 @@ function finalizarPeca(pecaId: string): void {
 }
 
 .titulo {
-  font-family: 'Bodoni Moda', serif;
+  font-family: var(--fonte-display);
   font-size: 30px;
   font-weight: 600;
   color: var(--cor-on-bg);

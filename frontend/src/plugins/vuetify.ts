@@ -1,0 +1,102 @@
+import { createVuetify, type ThemeDefinition } from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
+import 'vuetify/styles'
+import '@mdi/font/css/materialdesignicons.css'
+
+// Premium preto & vermelho: fundo marfim no claro, preto profundo no escuro,
+// primário crimson sofisticado, secundário champanhe, verde só p/ validade.
+const claro: ThemeDefinition = {
+  dark: false,
+  colors: {
+    primary: '#A31621',
+    'on-primary': '#FFFFFF',
+    'primary-container': '#F8D2D4',
+    'on-primary-container': '#4A0A10',
+    secondary: '#8C6D2F',
+    'on-secondary': '#FFFFFF',
+    'secondary-container': '#F3E4C0',
+    'on-secondary-container': '#33270A',
+    tertiary: '#2F6B33',
+    'on-tertiary': '#FFFFFF',
+    'tertiary-container': '#C2EFC0',
+    'on-tertiary-container': '#062B0A',
+    error: '#BA1A1A',
+    'on-error': '#FFFFFF',
+    'error-container': '#FFDAD4',
+    'on-error-container': '#410002',
+    warning: '#7A4E00',
+    'on-warning': '#FFFFFF',
+    'warning-container': '#FFE1A8',
+    'on-warning-container': '#2E1D00',
+    background: '#F6F4F1',
+    'on-background': '#161216',
+    surface: '#FFFFFF',
+    'on-surface': '#161216',
+    'surface-variant': '#ECE9E3',
+    'on-surface-variant': '#5D5751',
+    'surface-container-low': '#FCFBF9',
+    'surface-container': '#EFEDE9',
+    'surface-container-high': '#E6E3DD',
+    outline: '#DBD6CE',
+    'outline-variant': '#C9C3B9',
+    success: '#2F6B33',
+  },
+}
+
+const escuro: ThemeDefinition = {
+  dark: true,
+  colors: {
+    primary: '#D7263D',
+    'on-primary': '#FFFFFF',
+    'primary-container': '#5C1216',
+    'on-primary-container': '#FFDAD9',
+    secondary: '#E0BE74',
+    'on-secondary': '#3A2C07',
+    'secondary-container': '#453512',
+    'on-secondary-container': '#F3E4C0',
+    tertiary: '#93D194',
+    'on-tertiary': '#0C390F',
+    'tertiary-container': '#1E5222',
+    'on-tertiary-container': '#C2EFC0',
+    error: '#FFB4AB',
+    'on-error': '#690005',
+    'error-container': '#93000A',
+    'on-error-container': '#FFDAD4',
+    warning: '#E8B84B',
+    'on-warning': '#3A2A00',
+    'warning-container': '#4A3500',
+    'on-warning-container': '#FFE1A8',
+    background: '#0B0B0D',
+    'on-background': '#F5F2EC',
+    surface: '#151518',
+    'on-surface': '#F5F2EC',
+    'surface-variant': '#232329',
+    'on-surface-variant': '#B9B2A8',
+    'surface-container-low': '#101013',
+    'surface-container': '#1B1B20',
+    'surface-container-high': '#26262D',
+    outline: '#2F2F37',
+    'outline-variant': '#45444E',
+    success: '#93D194',
+  },
+}
+
+export default createVuetify({
+  components,
+  directives,
+  theme: {
+    defaultTheme: 'escuro',
+    themes: { claro, escuro },
+  },
+  defaults: {
+    VBtn: { rounded: 'lg', height: 44 },
+    VCard: { rounded: 'xl' },
+    VTextField: { variant: 'outlined', density: 'comfortable', rounded: 'lg' },
+    VSelect: { variant: 'outlined', density: 'comfortable', rounded: 'lg' },
+    VAutocomplete: { variant: 'outlined', density: 'comfortable', rounded: 'lg' },
+    VCombobox: { variant: 'outlined', density: 'comfortable', rounded: 'lg' },
+    VTextarea: { variant: 'outlined', density: 'comfortable', rounded: 'lg' },
+    VChip: { rounded: 'lg' },
+  },
+})

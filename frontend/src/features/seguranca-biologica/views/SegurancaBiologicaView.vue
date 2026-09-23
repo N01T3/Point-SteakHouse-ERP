@@ -4,21 +4,21 @@ import BadgeStatus from '../../../shared/components/BadgeStatus.vue'
 import BarraDeProgresso from '../../../shared/components/BarraDeProgresso.vue'
 import { useAutenticacao } from '../../auth/composables/useAutenticacao'
 import { useMaturacaoStore } from '../../maturacao/store/maturacao.store'
-import { MODELOS_CHECKLIST, type TurnoChecklist } from '../logica/checklists'
 import { NOMES_TECNICA } from '../../maturacao/types'
 import GraficoCrescimentoMicrobiano from '../components/GraficoCrescimentoMicrobiano.vue'
-import { abaixoDoLimiarDeSeguranca, estimarAtividadeDeAgua } from '../logica/atividade-de-agua'
 import {
   calcularDiasArmazenado,
   classificarStatusDeArmazenamento,
   NOMES_STATUS_ARMAZENAMENTO,
 } from '../logica/armazenamento-refrigerado'
+import { abaixoDoLimiarDeSeguranca, estimarAtividadeDeAgua } from '../logica/atividade-de-agua'
+import { MODELOS_CHECKLIST, type TurnoChecklist } from '../logica/checklists'
 import {
   DOENCA_CAUSADA,
   NOMES_ORGANISMO,
+  type OrganismoIndicador,
   PARAMETROS_POR_ORGANISMO,
   simularCrescimento,
-  type OrganismoIndicador,
 } from '../logica/crescimento-microbiano'
 import { percentualDoLimite, proximoDoLimite, ultrapassouOLimite } from '../logica/zona-de-perigo'
 import { useParametrosSegurancaBiologicaStore } from '../store/parametros.store'
@@ -121,7 +121,12 @@ const alertas = computed<Alerta[]>(() => {
 })
 
 const totalAlertas = computed(
-  () => ccpsCriticos.value.length + ccpsAtencao.value.length + geladeiraCritica.value.length + geladeiraAtencao.value.length + coletasCriticas.value.length,
+  () =>
+    ccpsCriticos.value.length +
+    ccpsAtencao.value.length +
+    geladeiraCritica.value.length +
+    geladeiraAtencao.value.length +
+    coletasCriticas.value.length,
 )
 
 const statusGeral = computed(() => {
@@ -295,7 +300,11 @@ function formatarTempoRelativo(data: Date): string {
         <BadgeStatus :tom="item.status === 'vencido' ? 'erro' : 'aviso'">
           {{ NOMES_STATUS_ARMAZENAMENTO[item.status] }}
         </BadgeStatus>
-        <button type="button" class="botao-secundario" @click="store.descartarItemDaGeladeira(item.id, nomeResponsavel)">
+        <button
+          type="button"
+          class="botao-secundario"
+          @click="store.descartarItemDaGeladeira(item.id, nomeResponsavel)"
+        >
           Descartar
         </button>
       </div>
@@ -304,16 +313,21 @@ function formatarTempoRelativo(data: Date): string {
     <!-- 6. Checklist + temperatura + ação corretiva -->
     <div class="cartao">
       <div class="secao-titulo">Checklist sanitário — {{ store.checklists.length }} registrado(s)</div>
-      <div class="nota">Marque cada item do turno, registre a temperatura e abra ação corretiva quando houver desvio.</div>
+      <div class="nota">
+        Marque cada item do turno, registre a temperatura e abra ação corretiva quando houver desvio.
+      </div>
       <div class="controles">
-        <label class="campo"><span>Turno</span>
+        <label class="campo"
+          ><span>Turno</span>
           <select v-model="chkTurno" @change="trocarTurno">
             <option value="abertura">Abertura</option>
             <option value="manipulacao">Manipulação</option>
             <option value="fechamento">Fechamento</option>
           </select>
         </label>
-        <label class="campo"><span>Observação</span><input v-model="chkObs" type="text" placeholder="ocorrência…" /></label>
+        <label class="campo"
+          ><span>Observação</span><input v-model="chkObs" type="text" placeholder="ocorrência…"
+        /></label>
       </div>
       <div class="check-lista">
         <label v-for="(item, i) in MODELOS_CHECKLIST[chkTurno]" :key="item" class="check-item">
@@ -323,19 +337,35 @@ function formatarTempoRelativo(data: Date): string {
       </div>
       <div class="controles">
         <label class="campo"><span>Local</span><input v-model="tmpLocal" type="text" /></label>
-        <label class="campo"><span>Temp (°C)</span><input v-model.number="tmpValor" type="number" step="0.1" placeholder="0,0" /></label>
-        <label class="campo"><span>Ação corretiva</span><input v-model="acaoDesc" type="text" placeholder="ex.: descartar lote…" /></label>
-        <label class="campo"><span>Lote</span><input v-model="acaoLote" type="text" placeholder="L…" /></label>
+        <label class="campo"
+          ><span>Temp (°C)</span><input v-model.number="tmpValor" type="number" step="0.1" placeholder="0,0"
+        /></label>
+        <label class="campo"
+          ><span>Ação corretiva</span
+          ><input v-model="acaoDesc" type="text" placeholder="ex.: descartar lote…"
+        /></label>
+        <label class="campo"
+          ><span>Lote</span><input v-model="acaoLote" type="text" placeholder="L…"
+        /></label>
       </div>
       <div v-if="chkErro" class="erro" role="alert">{{ chkErro }}</div>
       <div class="acoes-linha">
         <button type="button" class="botao-primario" @click="salvarChecklist">Registrar checklist</button>
-        <button type="button" class="botao-secundario" @click="salvarTemperatura">Registrar temperatura</button>
+        <button type="button" class="botao-secundario" @click="salvarTemperatura">
+          Registrar temperatura
+        </button>
         <button type="button" class="botao-secundario" @click="salvarAcao">Abrir ação corretiva</button>
       </div>
       <div v-for="a in store.acoes" :key="a.id" class="linha-simples">
         <span>{{ a.descricao }}{{ a.lote ? ` · lote ${a.lote}` : '' }} · {{ a.status }}</span>
-        <button v-if="a.status === 'aberta'" type="button" class="botao-secundario" @click="store.concluirAcao(a.id)">concluir</button>
+        <button
+          v-if="a.status === 'aberta'"
+          type="button"
+          class="botao-secundario"
+          @click="store.concluirAcao(a.id)"
+        >
+          concluir
+        </button>
       </div>
     </div>
 
@@ -349,10 +379,10 @@ function formatarTempoRelativo(data: Date): string {
         <div class="secao-titulo">Atividade de Água — maturação</div>
         <div v-if="pecasComAw.length === 0" class="texto">Nenhuma peça em maturação.</div>
         <div v-for="peca in pecasComAw" :key="peca.id" class="linha-simples">
-          <span>{{ peca.nome }} <span class="muted">({{ NOMES_TECNICA[peca.tecnica] }})</span></span>
-          <BadgeStatus :tom="peca.emRisco ? 'erro' : 'sucesso'">
-            Aw {{ peca.aw.toFixed(2) }}
-          </BadgeStatus>
+          <span
+            >{{ peca.nome }} <span class="muted">({{ NOMES_TECNICA[peca.tecnica] }})</span></span
+          >
+          <BadgeStatus :tom="peca.emRisco ? 'erro' : 'sucesso'"> Aw {{ peca.aw.toFixed(2) }} </BadgeStatus>
         </div>
         <div class="texto">Limiar de segurança: {{ parametros.limiarAw.toFixed(2) }}</div>
       </div>
@@ -362,10 +392,15 @@ function formatarTempoRelativo(data: Date): string {
         <div v-for="ccp in store.ccps" :key="ccp.id" class="zona-linha">
           <div class="zona-topo">
             <span>{{ ccp.nome }}</span>
-            <span>{{ ccp.minutosAcumuladosEmZonaDePerigo }}/{{ parametros.limiteZonaDePerigoMinutos }} min</span>
+            <span
+              >{{ ccp.minutosAcumuladosEmZonaDePerigo }}/{{ parametros.limiteZonaDePerigoMinutos }} min</span
+            >
           </div>
           <BarraDeProgresso
-            :percentual="percentualDoLimite(ccp.minutosAcumuladosEmZonaDePerigo, parametros.limiteZonaDePerigoMinutos) * 100"
+            :percentual="
+              percentualDoLimite(ccp.minutosAcumuladosEmZonaDePerigo, parametros.limiteZonaDePerigoMinutos) *
+              100
+            "
             :cor="
               ultrapassouOLimite(ccp.minutosAcumuladosEmZonaDePerigo, parametros.limiteZonaDePerigoMinutos)
                 ? 'var(--cor-error)'
@@ -396,7 +431,10 @@ function formatarTempoRelativo(data: Date): string {
             <input v-model.number="duracaoSimuladaHoras" type="number" min="1" max="48" step="1" />
           </label>
         </div>
-        <p class="texto"><strong>{{ NOMES_ORGANISMO[organismoSimulado] }}</strong> — causa: {{ DOENCA_CAUSADA[organismoSimulado] }}</p>
+        <p class="texto">
+          <strong>{{ NOMES_ORGANISMO[organismoSimulado] }}</strong> — causa:
+          {{ DOENCA_CAUSADA[organismoSimulado] }}
+        </p>
         <GraficoCrescimentoMicrobiano :pontos="pontosSimulados" :limite-de-acao-log="limiteDeAcaoLog" />
         <p class="referencia">
           Baranyi &amp; Roberts (1994); Ratkowsky et al. (1982).
@@ -448,7 +486,7 @@ function formatarTempoRelativo(data: Date): string {
 }
 
 .titulo {
-  font-family: 'Bodoni Moda', serif;
+  font-family: var(--fonte-display);
   font-size: 30px;
   font-weight: 600;
   color: var(--cor-on-bg);
@@ -541,7 +579,7 @@ function formatarTempoRelativo(data: Date): string {
 }
 
 .indicador strong {
-  font-family: 'Bodoni Moda', serif;
+  font-family: var(--fonte-display);
   font-size: 20px;
   color: var(--cor-on-surface);
 }

@@ -21,8 +21,12 @@ describe('transferências entre locais', () => {
 
   it('rejeita saldo insuficiente e mesma origem/destino', () => {
     const store = useMercadoStore()
-    expect(() => store.transferirEstoque('picanha', 'L2408', 'Loja', 'Balcão', 99, 'x', 'Rita')).toThrow(/insuficiente/i)
-    expect(() => store.transferirEstoque('picanha', 'L2408', 'Loja', 'Loja', 1, 'x', 'Rita')).toThrow(/diferentes/i)
+    expect(() => store.transferirEstoque('picanha', 'L2408', 'Loja', 'Balcão', 99, 'x', 'Rita')).toThrow(
+      /insuficiente/i,
+    )
+    expect(() => store.transferirEstoque('picanha', 'L2408', 'Loja', 'Loja', 1, 'x', 'Rita')).toThrow(
+      /diferentes/i,
+    )
   })
 })
 

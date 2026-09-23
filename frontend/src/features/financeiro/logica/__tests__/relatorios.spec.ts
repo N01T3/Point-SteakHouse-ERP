@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { ProdutoMercado, Venda } from '../../../mercado/tipos'
 import { resolverGrupo } from '../../../mercado/logica/grupos'
+import type { ProdutoMercado, Venda } from '../../../mercado/tipos'
 import {
   enriquecerItens,
   filtrarVendas,
@@ -47,32 +47,109 @@ function venda(parcial: Partial<Venda> & { id: string; numero: number }): Venda 
 }
 
 const PRODUTOS = [
-  produto({ id: 'picanha', nome: 'Picanha', categoria: 'Carnes', grupo: 'Carnes', subgrupo: 'Cortes bovinos', preco: 100, custoMedio: 60, fornecedor: 'Frig' }),
-  produto({ id: 'carvao', nome: 'Carvão', categoria: 'Churrasco', grupo: 'Churrasco', subgrupo: 'Carvão e acendimento', unidade: 'UN', preco: 20, custoMedio: 12, fornecedor: 'Carvão Nativo' }),
+  produto({
+    id: 'picanha',
+    nome: 'Picanha',
+    categoria: 'Carnes',
+    grupo: 'Carnes',
+    subgrupo: 'Cortes bovinos',
+    preco: 100,
+    custoMedio: 60,
+    fornecedor: 'Frig',
+  }),
+  produto({
+    id: 'carvao',
+    nome: 'Carvão',
+    categoria: 'Churrasco',
+    grupo: 'Churrasco',
+    subgrupo: 'Carvão e acendimento',
+    unidade: 'UN',
+    preco: 20,
+    custoMedio: 12,
+    fornecedor: 'Carvão Nativo',
+  }),
 ]
 
 const VENDAS: Venda[] = [
   venda({
-    id: 'v1', numero: 1, operador: 'ana', criadaEm: new Date(2026, 8, 22, 9, 15, 0).toISOString(),
-    pagamento: { forma: 'DINHEIRO', valorRecebido: 200 }, total: 180, subtotal: 180,
-    itens: [{ produtoId: 'picanha', nome: 'Picanha', unidade: 'KG', quantidade: 2, precoUnitario: 100, descontoPromo: 20, descontoManual: 0, lote: 'L1', validade: '2026-10-01' }],
+    id: 'v1',
+    numero: 1,
+    operador: 'ana',
+    criadaEm: new Date(2026, 8, 22, 9, 15, 0).toISOString(),
+    pagamento: { forma: 'DINHEIRO', valorRecebido: 200 },
+    total: 180,
+    subtotal: 180,
+    itens: [
+      {
+        produtoId: 'picanha',
+        nome: 'Picanha',
+        unidade: 'KG',
+        quantidade: 2,
+        precoUnitario: 100,
+        descontoPromo: 20,
+        descontoManual: 0,
+        lote: 'L1',
+        validade: '2026-10-01',
+      },
+    ],
   }),
   venda({
-    id: 'v2', numero: 2, operador: 'bruno', criadaEm: new Date(2026, 8, 22, 18, 30, 0).toISOString(),
-    pagamento: { forma: 'PIX' }, total: 40, subtotal: 40,
-    itens: [{ produtoId: 'carvao', nome: 'Carvão', unidade: 'UN', quantidade: 2, precoUnitario: 20, descontoPromo: 0, descontoManual: 0, lote: 'C1', validade: '2027-01-01' }],
+    id: 'v2',
+    numero: 2,
+    operador: 'bruno',
+    criadaEm: new Date(2026, 8, 22, 18, 30, 0).toISOString(),
+    pagamento: { forma: 'PIX' },
+    total: 40,
+    subtotal: 40,
+    itens: [
+      {
+        produtoId: 'carvao',
+        nome: 'Carvão',
+        unidade: 'UN',
+        quantidade: 2,
+        precoUnitario: 20,
+        descontoPromo: 0,
+        descontoManual: 0,
+        lote: 'C1',
+        validade: '2027-01-01',
+      },
+    ],
   }),
   venda({
-    id: 'v3', numero: 3, operador: 'ana', criadaEm: new Date(2026, 8, 22, 19, 0, 0).toISOString(), estado: 'CANCELADA',
-    pagamento: { forma: 'DINHEIRO' }, total: 50, subtotal: 50,
-    itens: [{ produtoId: 'picanha', nome: 'Picanha', unidade: 'KG', quantidade: 0.5, precoUnitario: 100, descontoPromo: 0, descontoManual: 0, lote: 'L1', validade: '2026-10-01' }],
+    id: 'v3',
+    numero: 3,
+    operador: 'ana',
+    criadaEm: new Date(2026, 8, 22, 19, 0, 0).toISOString(),
+    estado: 'CANCELADA',
+    pagamento: { forma: 'DINHEIRO' },
+    total: 50,
+    subtotal: 50,
+    itens: [
+      {
+        produtoId: 'picanha',
+        nome: 'Picanha',
+        unidade: 'KG',
+        quantidade: 0.5,
+        precoUnitario: 100,
+        descontoPromo: 0,
+        descontoManual: 0,
+        lote: 'L1',
+        validade: '2026-10-01',
+      },
+    ],
   }),
 ]
 
 describe('relatórios gerenciais', () => {
   it('resolve grupo com fallback para dados antigos', () => {
-    expect(resolverGrupo({ id: 'picanha', nome: 'Picanha', categoria: 'Carnes' })).toEqual({ grupo: 'Carnes', subgrupo: 'Cortes bovinos' })
-    expect(resolverGrupo({ id: 'x', nome: 'X', categoria: 'Carnes', grupo: 'Carnes', subgrupo: 'Maturados' }).subgrupo).toBe('Maturados')
+    expect(resolverGrupo({ id: 'picanha', nome: 'Picanha', categoria: 'Carnes' })).toEqual({
+      grupo: 'Carnes',
+      subgrupo: 'Cortes bovinos',
+    })
+    expect(
+      resolverGrupo({ id: 'x', nome: 'X', categoria: 'Carnes', grupo: 'Carnes', subgrupo: 'Maturados' })
+        .subgrupo,
+    ).toBe('Maturados')
   })
 
   it('enriquece itens com snapshot e preserva histórico', () => {
@@ -121,6 +198,23 @@ describe('relatórios gerenciais', () => {
     expect(relatorioPorFornecedor(VENDAS, PRODUTOS).length).toBe(2)
     const margem = margemRealPorProduto(VENDAS, PRODUTOS)
     expect(margem[0].produtoId).toBe('picanha')
-    expect(perdasPorGrupo([{ id: 'p', produtoId: 'picanha', produto: 'Picanha', lote: 'L1', quantidade: 1, valor: 60, motivo: 'validade', responsavel: 'r', criadaEm: '' }], PRODUTOS)[0].grupo).toBe('Carnes')
+    expect(
+      perdasPorGrupo(
+        [
+          {
+            id: 'p',
+            produtoId: 'picanha',
+            produto: 'Picanha',
+            lote: 'L1',
+            quantidade: 1,
+            valor: 60,
+            motivo: 'validade',
+            responsavel: 'r',
+            criadaEm: '',
+          },
+        ],
+        PRODUTOS,
+      )[0].grupo,
+    ).toBe('Carnes')
   })
 })

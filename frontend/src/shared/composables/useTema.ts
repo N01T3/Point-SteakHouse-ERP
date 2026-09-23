@@ -27,6 +27,13 @@ watchEffect(() => {
   } catch {
     // per-viewer convenience only — ausência de armazenamento não deve quebrar o tema
   }
+  // Sincroniza tema Vuetify (Material 3) sem import estático para não quebrar testes
+  try {
+    const el = document.querySelector('#app')
+    if (el) el.setAttribute('data-vuetify-theme', modoEscuro.value ? 'escuro' : 'claro')
+  } catch {
+    // ignore
+  }
 })
 
 export function useTema() {
@@ -35,4 +42,17 @@ export function useTema() {
   }
 
   return { modoEscuro, alternar }
+}
+
+export function aplicarTemaVuetify(vuetify: unknown): void {
+  watchEffect(() => {
+    try {
+      const nome = modoEscuro.value ? 'escuro' : 'claro'
+      const tema = (vuetify as { theme?: { global?: { name?: { value?: string } } } } | undefined)?.theme
+        ?.global?.name
+      if (tema) tema.value = nome
+    } catch {
+      // Tema do Vuetify é cosmético — nunca deve quebrar a montagem do app
+    }
+  })
 }

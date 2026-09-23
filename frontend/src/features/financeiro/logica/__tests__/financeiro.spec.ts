@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   DESPERDICIOS_MOCK,
-  MARGEM_POR_ITEM_MOCK,
+  DIAS_MOCK,
   type DiaFinanceiro,
+  MARGEM_POR_ITEM_MOCK,
 } from '../../mock/financeiro.mock'
-import { DIAS_MOCK } from '../../mock/financeiro.mock'
 import {
   agregar,
   curvaABC,

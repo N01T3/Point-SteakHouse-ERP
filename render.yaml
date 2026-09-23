@@ -1,0 +1,26 @@
+# Amostra online do Point Steak House — só frontend estático (mock).
+# O login usa credencial única com queima de 4h (ver
+# frontend/src/features/auth/services/auth.mock.ts), o site se inutiliza após
+# VITE_AMOSTRA_EXPIRA_EM (ver frontend/src/shared/amostra/prazo-do-site.ts)
+# e o bundle é ofuscado via `npm run build:amostra`.
+services:
+  - type: web
+    name: point-steakhouse-amostra
+    env: static
+    buildCommand: cd frontend && npm ci && VITE_AMOSTRA_ONLINE=true VITE_AMOSTRA_EXPIRA_EM="${VITE_AMOSTRA_EXPIRA_EM:-$(node -e 'console.log(new Date(Date.now()+12*3600*1000).toISOString())')}" npm run build:amostra
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: NODE_VERSION
+        value: 24.13.0
+      - key: VITE_AMOSTRA_ONLINE
+        value: true
+      - key: VITE_DEMO_USUARIO
+        value: demo
+      # Defina a senha real no dashboard do Render (Settings → Environment),
+      # nunca commite: ela é embutida no bundle ofuscado no momento do build.
+      - key: VITE_DEMO_SENHA
+        sync: false
+      # Opcional: fixe o encerramento (ISO). Vazio = deploy + 12h (calculado
+      # no buildCommand). A remoção real do ar é manual no dashboard.
+      - key: VITE_AMOSTRA_EXPIRA_EM
+        sync: false

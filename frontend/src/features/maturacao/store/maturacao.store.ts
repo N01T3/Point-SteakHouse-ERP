@@ -8,7 +8,16 @@ export const useMaturacaoStore = defineStore('maturacao', () => {
   const pecas = ref<PecaEmMaturacao[]>(criarPecasMock())
   const pecasFinalizadas = ref<PecaEmMaturacao[]>([])
 
-  function iniciarMaturacao(dados: { nome: string; tecnica: PecaEmMaturacao['tecnica']; camaraId: string; pesoInicialKg: number; diasTotal: number; custoInicialPorKg: number; loteOrigem?: string; responsavel?: string }): PecaEmMaturacao {
+  function iniciarMaturacao(dados: {
+    nome: string
+    tecnica: PecaEmMaturacao['tecnica']
+    camaraId: string
+    pesoInicialKg: number
+    diasTotal: number
+    custoInicialPorKg: number
+    loteOrigem?: string
+    responsavel?: string
+  }): PecaEmMaturacao {
     if (!dados.nome.trim()) throw new Error('Nome da peça é obrigatório.')
     if (!camaras.some((c) => c.id === dados.camaraId)) throw new Error('Câmara inválida.')
     if (!(dados.pesoInicialKg > 0)) throw new Error('Peso inicial deve ser maior que zero.')

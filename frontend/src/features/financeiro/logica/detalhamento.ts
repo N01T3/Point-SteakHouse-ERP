@@ -2,8 +2,8 @@
 // Mistura base histórica (mock) com sessão real (turno, custos fixos, estoque).
 import { estoqueTotal } from '../../mercado/logica/mercado'
 import type { ProdutoMercado } from '../../mercado/tipos'
-import type { CustoFixo } from '../tipos'
 import type { CustoDetalhado, DiaFinanceiro } from '../mock/financeiro.mock'
+import type { CustoFixo } from '../tipos'
 import type { ResumoFinanceiro } from './financeiro'
 
 export interface SerieTemporal {
@@ -104,7 +104,8 @@ export interface FatiaDespesa {
 export function despesasPorCategoria(base: CustoDetalhado[], fixos: CustoFixo[]): FatiaDespesa[] {
   const mapa = new Map<string, number>()
   for (const c of base) mapa.set(c.categoria, (mapa.get(c.categoria) ?? 0) + c.valor)
-  for (const f of fixos.filter((x) => x.ativo)) mapa.set(f.categoria, (mapa.get(f.categoria) ?? 0) + f.valorMensal)
+  for (const f of fixos.filter((x) => x.ativo))
+    mapa.set(f.categoria, (mapa.get(f.categoria) ?? 0) + f.valorMensal)
   const total = [...mapa.values()].reduce((s, v) => s + v, 0)
   if (total <= 0) return []
   const ordenadas = [...mapa.entries()].sort((a, b) => b[1] - a[1])
@@ -115,7 +116,12 @@ export function despesasPorCategoria(base: CustoDetalhado[], fixos: CustoFixo[])
     valor: Math.round(valor),
     percentual: Math.round((valor / total) * 100),
   }))
-  if (resto > 0) fatias.push({ categoria: 'Outros', valor: Math.round(resto), percentual: Math.round((resto / total) * 100) })
+  if (resto > 0)
+    fatias.push({
+      categoria: 'Outros',
+      valor: Math.round(resto),
+      percentual: Math.round((resto / total) * 100),
+    })
   return fatias
 }
 
@@ -127,11 +133,20 @@ export interface ItemEstoqueValorizado {
   valor: number
 }
 
-export function estoqueValorizado(produtos: ProdutoMercado[]): { itens: ItemEstoqueValorizado[]; total: number } {
+export function estoqueValorizado(produtos: ProdutoMercado[]): {
+  itens: ItemEstoqueValorizado[]
+  total: number
+} {
   const itens = produtos
     .map((p) => {
       const quantidade = Math.round(estoqueTotal(p) * 1000) / 1000
-      return { produto: p.nome, quantidade, unidade: p.unidade, custoMedio: p.custoMedio, valor: Math.round(quantidade * p.custoMedio * 100) / 100 }
+      return {
+        produto: p.nome,
+        quantidade,
+        unidade: p.unidade,
+        custoMedio: p.custoMedio,
+        valor: Math.round(quantidade * p.custoMedio * 100) / 100,
+      }
     })
     .filter((i) => i.quantidade > 0)
     .sort((a, b) => b.valor - a.valor)
@@ -147,11 +162,21 @@ export interface ResumoRendimento {
 }
 
 export function resumirRendimento(
-  ordens: Array<{ pecaBruta: { pesoKg: number }; saidas: Array<{ pesoKg: number; classificacao: string }>; rendimentoRealizado: number; custoEfetivoPorKg: number }>,
+  ordens: Array<{
+    pecaBruta: { pesoKg: number }
+    saidas: Array<{ pesoKg: number; classificacao: string }>
+    rendimentoRealizado: number
+    custoEfetivoPorKg: number
+  }>,
 ): ResumoRendimento {
   const recebidoKg = Math.round(ordens.reduce((s, o) => s + o.pecaBruta.pesoKg, 0) * 100) / 100
   const aproveitavelKg =
-    Math.round(ordens.reduce((s, o) => s + o.saidas.filter((x) => x.classificacao === 'CORTE').reduce((a, x) => a + x.pesoKg, 0), 0) * 100) / 100
+    Math.round(
+      ordens.reduce(
+        (s, o) => s + o.saidas.filter((x) => x.classificacao === 'CORTE').reduce((a, x) => a + x.pesoKg, 0),
+        0,
+      ) * 100,
+    ) / 100
   const custoPonderado = ordens.reduce((s, o) => s + o.custoEfetivoPorKg * o.pecaBruta.pesoKg, 0)
   return {
     ordens: ordens.length,
@@ -176,7 +201,8 @@ export function compararComAnterior(todos: DiaFinanceiro[], atual: DiaFinanceiro
   if (atual.length === 0 || todos.length < atual.length * 2) return null
   const fim = todos.length - atual.length
   const anterior = todos.slice(Math.max(0, fim - atual.length), fim)
-  const soma = (lista: DiaFinanceiro[], campo: 'receita' | 'cmv' | 'despesas') => lista.reduce((s, d) => s + d[campo], 0)
+  const soma = (lista: DiaFinanceiro[], campo: 'receita' | 'cmv' | 'despesas') =>
+    lista.reduce((s, d) => s + d[campo], 0)
   const receitaAtual = soma(atual, 'receita')
   const receitaAnterior = soma(anterior, 'receita')
   const lucroAtual = receitaAtual - soma(atual, 'cmv') - soma(atual, 'despesas')

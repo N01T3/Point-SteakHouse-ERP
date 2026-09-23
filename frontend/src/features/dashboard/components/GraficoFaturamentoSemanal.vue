@@ -15,7 +15,7 @@ const barras = computed(() =>
     return {
       label: DIAS_DA_SEMANA[data.getDay()],
       valor: dia.valor,
-      valorLabel: (dia.valor / 1000).toFixed(1) + 'k',
+      valorLabel: `${(dia.valor / 1000).toFixed(1)}k`,
       destaque: data.getDay() === 6,
     }
   }),

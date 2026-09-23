@@ -35,12 +35,22 @@ export interface AcaoCorretiva {
 }
 
 export const MODELOS_CHECKLIST: Record<TurnoChecklist, string[]> = {
-  abertura: ['Câmaras 0–4°C conferidas', 'Balcão higienizado', 'Utensílios sanitizados', 'Lotes/validade conferidos'],
+  abertura: [
+    'Câmaras 0–4°C conferidas',
+    'Balcão higienizado',
+    'Utensílios sanitizados',
+    'Lotes/validade conferidos',
+  ],
   manipulacao: ['Mãos/luvas conforme', 'Tábuas por cor', 'Temperatura de exposição OK', 'Etiquetas legíveis'],
   fechamento: ['Sobras etiquetadas', 'Câmaras fechadas', 'Piso/balcão higienizados', 'Lixo descartado'],
 }
 
-export function criarChecklist(turno: TurnoChecklist, responsavel: string, estados: boolean[], observacao?: string): ChecklistSanitario {
+export function criarChecklist(
+  turno: TurnoChecklist,
+  responsavel: string,
+  estados: boolean[],
+  observacao?: string,
+): ChecklistSanitario {
   const modelo = MODELOS_CHECKLIST[turno]
   if (!responsavel.trim()) throw new Error('Responsável é obrigatório.')
   if (estados.length !== modelo.length) throw new Error('Marque todos os itens do checklist.')
@@ -56,7 +66,8 @@ export function criarChecklist(turno: TurnoChecklist, responsavel: string, estad
 
 export function validarTemperatura(local: string, temperatura: number, responsavel: string): string | null {
   if (!local.trim()) return 'Local é obrigatório.'
-  if (!Number.isFinite(temperatura) || temperatura < -30 || temperatura > 30) return 'Temperatura fora da faixa (-30 a 30°C).'
+  if (!Number.isFinite(temperatura) || temperatura < -30 || temperatura > 30)
+    return 'Temperatura fora da faixa (-30 a 30°C).'
   if (!responsavel.trim()) return 'Responsável é obrigatório.'
   return null
 }

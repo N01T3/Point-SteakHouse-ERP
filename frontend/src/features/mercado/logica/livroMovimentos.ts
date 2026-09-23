@@ -60,7 +60,5 @@ export function saldoDoLivro(movimentos: MovimentoLivro[], produtoId: string, lo
 
 /** Cadeia de transformação de um lote: todos os lançamentos em ordem. */
 export function cadeiaDoLote(movimentos: MovimentoLivro[], lote: string): MovimentoLivro[] {
-  return movimentos
-    .filter((m) => m.lote === lote)
-    .sort((a, b) => (a.criadaEm < b.criadaEm ? -1 : 1))
+  return movimentos.filter((m) => m.lote === lote).sort((a, b) => (a.criadaEm < b.criadaEm ? -1 : 1))
 }

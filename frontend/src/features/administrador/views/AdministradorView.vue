@@ -9,9 +9,24 @@ interface PendenciaAdministrativa {
 }
 
 const pendencias: PendenciaAdministrativa[] = [
-  { titulo: '3 itens precisam de reposição', detalhe: 'Filé mignon abaixo do mínimo · 2 dias de cobertura', nivel: 'critica', destino: 'clientes' },
-  { titulo: '2 lotes vencem em 48h', detalhe: 'Picanha L2408 · 8,4 kg na câmara fria 2', nivel: 'atencao', destino: 'maturacao' },
-  { titulo: '1 conta a pagar vence hoje', detalhe: 'Energia · competência atual', nivel: 'atencao', destino: 'financeiro' },
+  {
+    titulo: '3 itens precisam de reposição',
+    detalhe: 'Filé mignon abaixo do mínimo · 2 dias de cobertura',
+    nivel: 'critica',
+    destino: 'clientes',
+  },
+  {
+    titulo: '2 lotes vencem em 48h',
+    detalhe: 'Picanha L2408 · 8,4 kg na câmara fria 2',
+    nivel: 'atencao',
+    destino: 'maturacao',
+  },
+  {
+    titulo: '1 conta a pagar vence hoje',
+    detalhe: 'Energia · competência atual',
+    nivel: 'atencao',
+    destino: 'financeiro',
+  },
 ]
 </script>
 
@@ -45,7 +60,7 @@ const pendencias: PendenciaAdministrativa[] = [
 }
 
 .titulo {
-  font-family: 'Bodoni Moda', serif;
+  font-family: var(--fonte-display);
   font-size: 30px;
   font-weight: 600;
   color: var(--cor-on-bg);

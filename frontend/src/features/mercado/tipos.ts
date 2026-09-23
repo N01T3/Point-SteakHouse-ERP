@@ -213,7 +213,14 @@ export interface RecebimentoMercado {
   criadaEm: string
 }
 
-export const LOCAIS_ESTOQUE = ['Loja', 'Balcão', 'Câmara fria 1', 'Câmara fria 2', 'Depósito', 'Quarentena'] as const
+export const LOCAIS_ESTOQUE = [
+  'Loja',
+  'Balcão',
+  'Câmara fria 1',
+  'Câmara fria 2',
+  'Depósito',
+  'Quarentena',
+] as const
 
 export type LocalEstoque = (typeof LOCAIS_ESTOQUE)[number] | string
 
@@ -288,5 +295,11 @@ export interface RastroLote {
   produto?: string
   validade?: string
   estoquePorLocal: Array<{ local: string; quantidade: number; estado: string }>
-  vendas: Array<{ numero: number; criadaEm: string; operador: string; clienteNome?: string; quantidade: number }>
+  vendas: Array<{
+    numero: number
+    criadaEm: string
+    operador: string
+    clienteNome?: string
+    quantidade: number
+  }>
 }

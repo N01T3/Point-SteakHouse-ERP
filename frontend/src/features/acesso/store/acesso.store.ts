@@ -5,12 +5,7 @@ import { computed, ref } from 'vue'
 import type { PapelUsuario, Permissao } from '../../../shared/tipos/papel'
 import { login, redefinirSenhaMock } from '../../auth/services/auth.mock'
 import { USUARIOS_GERENCIADOS_MOCK } from '../mock/acesso.mock'
-import type {
-  CargoPersonalizado,
-  EventoAuditoria,
-  StatusCargo,
-  TipoEventoAuditoria,
-} from '../tipos'
+import type { CargoPersonalizado, EventoAuditoria, StatusCargo, TipoEventoAuditoria } from '../tipos'
 
 function clonar<T>(valor: T): T {
   return JSON.parse(JSON.stringify(valor)) as T
@@ -102,7 +97,12 @@ export const useAcessoStore = defineStore('acesso', () => {
     return cargo
   }
 
-  function mudarStatusCargo(cargoId: string, status: StatusCargo, operador: string, motivo = ''): CargoPersonalizado {
+  function mudarStatusCargo(
+    cargoId: string,
+    status: StatusCargo,
+    operador: string,
+    motivo = '',
+  ): CargoPersonalizado {
     const cargo = cargos.value.find((c) => c.id === cargoId)
     if (!cargo) throw new Error('Cargo não encontrado.')
     cargo.status = status
@@ -114,24 +114,36 @@ export const useAcessoStore = defineStore('acesso', () => {
    * Aprovação exige cargos.gerenciar (dono) + reautenticação com a senha atual
    * do Proprietário — validada no mock de login, nunca confiada do cliente.
    */
-  async function aprovarCargo(cargoId: string, identificadorDono: string, senha: string): Promise<CargoPersonalizado> {
+  async function aprovarCargo(
+    cargoId: string,
+    identificadorDono: string,
+    senha: string,
+  ): Promise<CargoPersonalizado> {
     const cargo = cargos.value.find((c) => c.id === cargoId)
     if (!cargo) throw new Error('Cargo não encontrado.')
     if (cargo.status !== 'solicitado') throw new Error('Só é possível aprovar solicitação pendente.')
-    let resposta
+    let resposta: Awaited<ReturnType<typeof login>>
     try {
       resposta = await login(identificadorDono, senha)
     } catch {
       auditar('cargo', `Aprovação de "${cargo.nome}" recusada: reautenticação falhou`, identificadorDono)
       throw new Error('Reautenticação falhou — confira a senha do Proprietário.')
     }
-    if (resposta.usuario.papel !== 'PROPRIETARIO' || !resposta.usuario.permissoes.includes('cargos.gerenciar')) {
+    if (
+      resposta.usuario.papel !== 'PROPRIETARIO' ||
+      !resposta.usuario.permissoes.includes('cargos.gerenciar')
+    ) {
       throw new Error('Aprovação exclusiva do Proprietário.')
     }
     return mudarStatusCargo(cargoId, 'aprovado', resposta.usuario.nome)
   }
 
-  async function recusarCargo(cargoId: string, identificadorDono: string, senha: string, motivo: string): Promise<CargoPersonalizado> {
+  async function recusarCargo(
+    cargoId: string,
+    identificadorDono: string,
+    senha: string,
+    motivo: string,
+  ): Promise<CargoPersonalizado> {
     const cargo = cargos.value.find((c) => c.id === cargoId)
     if (!cargo) throw new Error('Cargo não encontrado.')
     try {
@@ -140,11 +152,17 @@ export const useAcessoStore = defineStore('acesso', () => {
       return mudarStatusCargo(cargoId, 'recusado', resposta.usuario.nome, motivo)
     } catch (e) {
       if (e instanceof Error && e.message.includes('exclusivo')) throw e
-      throw new Error('Reautenticação falhou — confira a senha do Proprietário.')
+      throw new Error('Reautenticação falhou — confira a senha do Proprietário.', { cause: e })
     }
   }
 
-  function alterarPermissoesCargo(cargoId: string, permissoes: Permissao[], autor: string, motivo: string, pode: boolean): CargoPersonalizado {
+  function alterarPermissoesCargo(
+    cargoId: string,
+    permissoes: Permissao[],
+    autor: string,
+    motivo: string,
+    pode: boolean,
+  ): CargoPersonalizado {
     if (!pode) throw new Error('Sem permissão: cargos.gerenciar (Proprietário).')
     const cargo = cargos.value.find((c) => c.id === cargoId)
     if (!cargo) throw new Error('Cargo não encontrado.')
@@ -160,7 +178,11 @@ export const useAcessoStore = defineStore('acesso', () => {
     })
     cargo.permissoes = [...permissoes]
     cargo.versao += 1
-    auditar('permissao', `Cargo "${cargo.nome}" v${cargo.versao}: permissões alteradas — ${motivo.trim()}`, autor)
+    auditar(
+      'permissao',
+      `Cargo "${cargo.nome}" v${cargo.versao}: permissões alteradas — ${motivo.trim()}`,
+      autor,
+    )
     return cargo
   }
 

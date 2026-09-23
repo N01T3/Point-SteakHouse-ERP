@@ -77,13 +77,22 @@ export function promocaoDoItem(
     return { percentual: markdown.percentual, descricao: markdown.descricao }
   }
   const porQuantidade = promocoes.find(
-    (p) => p.ativa && p.tipo === 'quantidade' && p.produtoId === produto.id && (p.quantidadeMinima ?? 0) <= quantidade,
+    (p) =>
+      p.ativa &&
+      p.tipo === 'quantidade' &&
+      p.produtoId === produto.id &&
+      (p.quantidadeMinima ?? 0) <= quantidade,
   )
   if (porQuantidade) return { percentual: porQuantidade.percentual, descricao: porQuantidade.descricao }
   return null
 }
 
-export function subtotalItem(quantidade: number, precoUnitario: number, descontoPromo: number, descontoManual: number): number {
+export function subtotalItem(
+  quantidade: number,
+  precoUnitario: number,
+  descontoPromo: number,
+  descontoManual: number,
+): number {
   return arredondar(quantidade * precoUnitario - descontoPromo - descontoManual)
 }
 

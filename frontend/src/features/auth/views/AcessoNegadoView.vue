@@ -23,7 +23,7 @@ const store = useAuthStore()
 }
 
 .titulo {
-  font-family: 'Bodoni Moda', serif;
+  font-family: var(--fonte-display);
   font-size: 26px;
   font-weight: 600;
   color: var(--cor-on-bg);

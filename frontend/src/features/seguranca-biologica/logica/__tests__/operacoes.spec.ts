@@ -1,16 +1,28 @@
 import { describe, expect, it } from 'vitest'
-import { criarChecklist, validarTemperatura } from '../checklists'
 import { montarDreReal, validarCustoFixo } from '../../../financeiro/tipos'
+import { criarChecklist, validarTemperatura } from '../checklists'
 
 describe('novas operações', () => {
   it('valida custo fixo', () => {
-    expect(validarCustoFixo({ descricao: '', categoria: 'X', centroCusto: 'Y', valorMensal: 10 })).toContain('Descrição')
-    expect(validarCustoFixo({ descricao: 'Aluguel', categoria: 'X', centroCusto: 'Y', valorMensal: 0 })).toContain('maior')
-    expect(validarCustoFixo({ descricao: 'Aluguel', categoria: 'X', centroCusto: 'Y', valorMensal: 100 })).toBeNull()
+    expect(validarCustoFixo({ descricao: '', categoria: 'X', centroCusto: 'Y', valorMensal: 10 })).toContain(
+      'Descrição',
+    )
+    expect(
+      validarCustoFixo({ descricao: 'Aluguel', categoria: 'X', centroCusto: 'Y', valorMensal: 0 }),
+    ).toContain('maior')
+    expect(
+      validarCustoFixo({ descricao: 'Aluguel', categoria: 'X', centroCusto: 'Y', valorMensal: 100 }),
+    ).toBeNull()
   })
 
   it('DRE real desconta fixos, contas e desperdício', () => {
-    const dre = montarDreReal({ receita: 10000, cmv: 4000, custosFixos: 2000, contasPagas: 500, desperdicio: 300 })
+    const dre = montarDreReal({
+      receita: 10000,
+      cmv: 4000,
+      custosFixos: 2000,
+      contasPagas: 500,
+      desperdicio: 300,
+    })
     expect(dre.lucroBruto).toBe(6000)
     expect(dre.lucroLiquido).toBe(3200)
   })

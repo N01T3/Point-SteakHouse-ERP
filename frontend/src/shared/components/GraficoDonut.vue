@@ -68,7 +68,7 @@ const fundoConico = (() => {
 }
 
 .valor-central {
-  font-family: 'Bodoni Moda', serif;
+  font-family: var(--fonte-display);
   font-size: 19px;
   font-weight: 600;
   color: var(--cor-on-surface);

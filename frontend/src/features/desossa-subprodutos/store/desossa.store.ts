@@ -6,7 +6,7 @@ import {
   calcularPesoAproveitavelKg,
   calcularRendimentoRealizado,
 } from '../logica/custeio'
-import { TEMPLATES_DESOSSA_MOCK, criarPecasBrutasMock } from '../mocks/desossa.mock'
+import { criarPecasBrutasMock, TEMPLATES_DESOSSA_MOCK } from '../mocks/desossa.mock'
 import type { OrdemDeDesossa, PecaBruta, SaidaDeDesossa } from '../types'
 
 function novoId(prefixo: string): string {
@@ -25,7 +25,13 @@ export const useDesossaStore = defineStore('desossa', () => {
     if (!dados.tipoDePeca.trim()) throw new Error('Tipo de peça é obrigatório.')
     if (!(dados.pesoKg > 0)) throw new Error('Peso deve ser maior que zero.')
     if (!(dados.custoPorKg >= 0)) throw new Error('Custo por kg inválido.')
-    const peca: PecaBruta = { ...dados, fornecedor: dados.fornecedor.trim(), tipoDePeca: dados.tipoDePeca.trim(), id: novoId('peca-bruta'), recebidoEm: new Date() }
+    const peca: PecaBruta = {
+      ...dados,
+      fornecedor: dados.fornecedor.trim(),
+      tipoDePeca: dados.tipoDePeca.trim(),
+      id: novoId('peca-bruta'),
+      recebidoEm: new Date(),
+    }
     pecasBrutasPendentes.value.unshift(peca)
     return peca
   }
@@ -33,13 +39,19 @@ export const useDesossaStore = defineStore('desossa', () => {
   /** Valida soma dos cortes: não pode ultrapassar o peso da peça. */
   function validarSaidas(pesoPecaKg: number, saidas: SaidaDeDesossa[]): string | null {
     if (saidas.length === 0) return 'Informe ao menos um corte ou subproduto.'
-    if (!saidas.some((s) => s.classificacao === 'CORTE' && s.pesoKg > 0)) return 'Informe ao menos um corte de venda.'
+    if (!saidas.some((s) => s.classificacao === 'CORTE' && s.pesoKg > 0))
+      return 'Informe ao menos um corte de venda.'
     const total = saidas.reduce((s, x) => s + x.pesoKg, 0)
-    if (total - pesoPecaKg > 0.001) return `Soma das saídas (${total.toFixed(2)} kg) ultrapassa a peça (${pesoPecaKg.toFixed(2)} kg).`
+    if (total - pesoPecaKg > 0.001)
+      return `Soma das saídas (${total.toFixed(2)} kg) ultrapassa a peça (${pesoPecaKg.toFixed(2)} kg).`
     return null
   }
 
-  function concluirDesossa(pecaBrutaId: string, saidas: SaidaDeDesossa[], rendimentoEsperado: number): OrdemDeDesossa {
+  function concluirDesossa(
+    pecaBrutaId: string,
+    saidas: SaidaDeDesossa[],
+    rendimentoEsperado: number,
+  ): OrdemDeDesossa {
     const indice = pecasBrutasPendentes.value.findIndex((peca) => peca.id === pecaBrutaId)
     if (indice === -1) throw new Error('Peça não encontrada.')
 
@@ -62,11 +74,13 @@ export const useDesossaStore = defineStore('desossa', () => {
       custoEfetivoPorKg: custoEfetivo,
       concluidaEm: new Date(),
       enviadaAoEstoque: false,
-      custoPorCorte: saidas.filter((s) => s.classificacao === 'CORTE').map((s) => ({
-        nome: s.nome,
-        pesoKg: s.pesoKg,
-        custoTotal: Math.round(s.pesoKg * custoEfetivo * 100) / 100,
-      })),
+      custoPorCorte: saidas
+        .filter((s) => s.classificacao === 'CORTE')
+        .map((s) => ({
+          nome: s.nome,
+          pesoKg: s.pesoKg,
+          custoTotal: Math.round(s.pesoKg * custoEfetivo * 100) / 100,
+        })),
     }
     ordensConcluidas.value.unshift(ordem)
     return ordem
@@ -88,5 +102,15 @@ export const useDesossaStore = defineStore('desossa', () => {
     pecasBrutasPendentes.value.unshift(ordem.pecaBruta)
   }
 
-  return { templates, pecasBrutasPendentes, ordensConcluidas, erro, registrarPecaBruta, validarSaidas, concluirDesossa, marcarEnviada, cancelarOrdem }
+  return {
+    templates,
+    pecasBrutasPendentes,
+    ordensConcluidas,
+    erro,
+    registrarPecaBruta,
+    validarSaidas,
+    concluirDesossa,
+    marcarEnviada,
+    cancelarOrdem,
+  }
 })

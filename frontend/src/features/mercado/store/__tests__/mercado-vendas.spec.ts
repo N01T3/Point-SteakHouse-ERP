@@ -35,7 +35,13 @@ describe('pagamento dividido', () => {
     const store = turnoAberto()
     store.adicionarProduto('cafe', 1)
     expect(() =>
-      store.finalizarVenda({ forma: 'DIVIDIDO', parcelas: [{ forma: 'CARTAO', valor: 10 }, { forma: 'PIX', valor: 5 }] }),
+      store.finalizarVenda({
+        forma: 'DIVIDIDO',
+        parcelas: [
+          { forma: 'CARTAO', valor: 10 },
+          { forma: 'PIX', valor: 5 },
+        ],
+      }),
     ).toThrow(/somam o total/i)
   })
 

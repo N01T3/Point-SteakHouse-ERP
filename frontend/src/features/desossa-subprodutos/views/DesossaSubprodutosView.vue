@@ -3,11 +3,11 @@ import { computed, ref } from 'vue'
 import BadgeStatus from '../../../shared/components/BadgeStatus.vue'
 import Modal from '../../../shared/components/Modal.vue'
 import { useFormatador } from '../../../shared/composables/useFormatador'
-import { desvioDeRendimentoSignificativo, calcularPrecoSugeridoPorKg } from '../logica/custeio'
-import { useDesossaStore } from '../store/desossa.store'
-import { useMercadoStore } from '../../mercado/store/mercado.store'
 import { useAuthStore } from '../../auth/store/auth.store'
-import { NOMES_DESTINO, SAIDAS_SECUNDARIAS_PADRAO, type PecaBruta, type SaidaDeDesossa } from '../types'
+import { useMercadoStore } from '../../mercado/store/mercado.store'
+import { calcularPrecoSugeridoPorKg, desvioDeRendimentoSignificativo } from '../logica/custeio'
+import { useDesossaStore } from '../store/desossa.store'
+import { NOMES_DESTINO, type PecaBruta, SAIDAS_SECUNDARIAS_PADRAO, type SaidaDeDesossa } from '../types'
 
 const store = useDesossaStore()
 const mercado = useMercadoStore()
@@ -26,7 +26,12 @@ function cadastrarPeca(): void {
   erro.value = ''
   try {
     if (novaPeso.value === null || novaCusto.value === null) throw new Error('Informe peso e custo.')
-    store.registrarPecaBruta({ fornecedor: novaFornecedor.value, tipoDePeca: novaTipo.value, pesoKg: novaPeso.value, custoPorKg: novaCusto.value })
+    store.registrarPecaBruta({
+      fornecedor: novaFornecedor.value,
+      tipoDePeca: novaTipo.value,
+      pesoKg: novaPeso.value,
+      custoPorKg: novaCusto.value,
+    })
     novaFornecedor.value = ''
     novaPeso.value = null
     novaCusto.value = null
@@ -130,16 +135,27 @@ function confirmarDesossa(): void {
 
     <div class="secao">
       <div class="secao-titulo">Nova peça bruta — entrada da desossa</div>
-      <div class="nota">Cadastre a peça recebida antes de abrir a ordem. O peso total limita a soma dos cortes.</div>
+      <div class="nota">
+        Cadastre a peça recebida antes de abrir a ordem. O peso total limita a soma dos cortes.
+      </div>
       <div class="form-grade">
-        <label class="campo-inline"><span>Fornecedor</span><input v-model="novaFornecedor" type="text" placeholder="Frigorífico…" /></label>
-        <label class="campo-inline"><span>Tipo</span>
+        <label class="campo-inline"
+          ><span>Fornecedor</span><input v-model="novaFornecedor" type="text" placeholder="Frigorífico…"
+        /></label>
+        <label class="campo-inline"
+          ><span>Tipo</span>
           <select v-model="novaTipo">
             <option v-for="t in store.templates" :key="t.id" :value="t.tipoDePeca">{{ t.tipoDePeca }}</option>
           </select>
         </label>
-        <label class="campo-inline"><span>Peso (kg)</span><input v-model.number="novaPeso" type="number" min="0" step="0.1" placeholder="0,0" /></label>
-        <label class="campo-inline"><span>Custo/kg (R$)</span><input v-model.number="novaCusto" type="number" min="0" step="0.01" placeholder="0,00" /></label>
+        <label class="campo-inline"
+          ><span>Peso (kg)</span
+          ><input v-model.number="novaPeso" type="number" min="0" step="0.1" placeholder="0,0"
+        /></label>
+        <label class="campo-inline"
+          ><span>Custo/kg (R$)</span
+          ><input v-model.number="novaCusto" type="number" min="0" step="0.01" placeholder="0,00"
+        /></label>
       </div>
       <button class="botao-primario" type="button" @click="cadastrarPeca">Cadastrar peça</button>
     </div>
@@ -163,8 +179,15 @@ function confirmarDesossa(): void {
       <div v-for="ordem in store.ordensConcluidas" :key="ordem.id" class="linha-ordem">
         <div class="ordem-cabecalho">
           <strong>{{ ordem.pecaBruta.tipoDePeca }} · {{ ordem.pecaBruta.fornecedor }}</strong>
-          <BadgeStatus :tom="desvioDeRendimentoSignificativo(ordem.rendimentoRealizado, ordem.rendimentoEsperado) ? 'aviso' : 'sucesso'">
-            {{ (ordem.rendimentoRealizado * 100).toFixed(1) }}% rendimento (esperado {{ (ordem.rendimentoEsperado * 100).toFixed(0) }}%)
+          <BadgeStatus
+            :tom="
+              desvioDeRendimentoSignificativo(ordem.rendimentoRealizado, ordem.rendimentoEsperado)
+                ? 'aviso'
+                : 'sucesso'
+            "
+          >
+            {{ (ordem.rendimentoRealizado * 100).toFixed(1) }}% rendimento (esperado
+            {{ (ordem.rendimentoEsperado * 100).toFixed(0) }}%)
           </BadgeStatus>
         </div>
         <div class="ordem-detalhe">
@@ -172,7 +195,9 @@ function confirmarDesossa(): void {
           {{ formatarMoeda(calcularPrecoSugeridoPorKg(ordem.custoEfetivoPorKg)) }}/kg
         </div>
         <div v-if="ordem.custoPorCorte?.length" class="ordem-detalhe">
-          <span v-for="c in ordem.custoPorCorte" :key="c.nome">{{ c.nome }}: {{ c.pesoKg }}kg · {{ formatarMoeda(c.custoTotal) }} · </span>
+          <span v-for="c in ordem.custoPorCorte" :key="c.nome"
+            >{{ c.nome }}: {{ c.pesoKg }}kg · {{ formatarMoeda(c.custoTotal) }} ·
+          </span>
         </div>
         <div class="ordem-saidas">
           <span v-for="saida in ordem.saidas" :key="saida.id" class="etiqueta-saida">
@@ -181,30 +206,58 @@ function confirmarDesossa(): void {
           </span>
         </div>
         <div class="ordem-acoes">
-          <button v-if="!ordem.enviadaAoEstoque" type="button" class="botao-primario" @click="enviarAoEstoque(ordem.id)">Enviar cortes ao estoque</button>
+          <button
+            v-if="!ordem.enviadaAoEstoque"
+            type="button"
+            class="botao-primario"
+            @click="enviarAoEstoque(ordem.id)"
+          >
+            Enviar cortes ao estoque
+          </button>
           <span v-else class="vazio">{{ enviadaAoEstoque[ordem.id] ?? 'Enviada' }} lotes no estoque.</span>
-          <button v-if="!ordem.enviadaAoEstoque" type="button" class="botao-primario" @click="cancelarOrdem(ordem.id)">Cancelar ordem</button>
+          <button
+            v-if="!ordem.enviadaAoEstoque"
+            type="button"
+            class="botao-primario"
+            @click="cancelarOrdem(ordem.id)"
+          >
+            Cancelar ordem
+          </button>
         </div>
       </div>
     </div>
 
-    <Modal v-if="pecaEmDesossa && templateDaPeca" :titulo="`Ordem de desossa — ${pecaEmDesossa.tipoDePeca}`" @fechar="fecharModal">
+    <Modal
+      v-if="pecaEmDesossa && templateDaPeca"
+      :titulo="`Ordem de desossa — ${pecaEmDesossa.tipoDePeca}`"
+      @fechar="fecharModal"
+    >
       <p class="texto-aviso">
-        {{ pecaEmDesossa.pesoKg }} kg recebidos de {{ pecaEmDesossa.fornecedor }} — rendimento esperado do template:
-        {{ (rendimentoEsperadoDoTemplate * 100).toFixed(0) }}%.
+        {{ pecaEmDesossa.pesoKg }} kg recebidos de {{ pecaEmDesossa.fornecedor }} — rendimento esperado do
+        template: {{ (rendimentoEsperadoDoTemplate * 100).toFixed(0) }}%.
       </p>
 
       <div class="grupo-campos">
         <div class="grupo-titulo">Cortes de venda</div>
         <label v-for="corte in templateDaPeca.cortesEsperados" :key="corte.nome" class="campo-inline">
           <span>{{ corte.nome }} (esperado {{ (corte.percentualEsperado * 100).toFixed(0) }}%)</span>
-          <input v-model.number="pesosPorCorte[corte.nome]" type="number" min="0" step="0.1" placeholder="peso real (kg)" />
+          <input
+            v-model.number="pesosPorCorte[corte.nome]"
+            type="number"
+            min="0"
+            step="0.1"
+            placeholder="peso real (kg)"
+          />
         </label>
       </div>
 
       <div class="grupo-campos">
         <div class="grupo-titulo">Subprodutos (osso, sebo, apara, perda)</div>
-        <label v-for="secundaria in SAIDAS_SECUNDARIAS_PADRAO" :key="secundaria.classificacao" class="campo-inline">
+        <label
+          v-for="secundaria in SAIDAS_SECUNDARIAS_PADRAO"
+          :key="secundaria.classificacao"
+          class="campo-inline"
+        >
           <span>{{ secundaria.nome }} → {{ NOMES_DESTINO[secundaria.destinoPadrao] }}</span>
           <input
             v-model.number="pesosSecundarios[secundaria.classificacao]"
@@ -239,7 +292,7 @@ function confirmarDesossa(): void {
 }
 
 .titulo {
-  font-family: 'Bodoni Moda', serif;
+  font-family: var(--fonte-display);
   font-size: 30px;
   font-weight: 600;
   color: var(--cor-on-bg);
@@ -360,7 +413,12 @@ function confirmarDesossa(): void {
   gap: 8px;
 }
 
-.ordem-acoes { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.ordem-acoes {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
 
 .etiqueta-saida {
   font-size: 11px;

@@ -24,7 +24,8 @@ export function serializarCatalogo(produtos: ProdutoMercado[]): CatalogoSalvo {
 export function mesclarCatalogo(base: ProdutoMercado[], salvo: CatalogoSalvo | null): ProdutoMercado[] {
   if (!salvo || !Array.isArray(salvo.produtos)) return base
   const precisaEnriquecer = (lista: ProdutoMercado[]): boolean => lista.some((p) => !p.grupo || !p.subgrupo)
-  if (salvo.versao === VERSAO_CATALOGO) return precisaEnriquecer(salvo.produtos) ? salvo.produtos.map(enriquecerProduto) : salvo.produtos
+  if (salvo.versao === VERSAO_CATALOGO)
+    return precisaEnriquecer(salvo.produtos) ? salvo.produtos.map(enriquecerProduto) : salvo.produtos
   const idsLocais = new Set(salvo.produtos.map((p) => p.id))
   const locais = precisaEnriquecer(salvo.produtos) ? salvo.produtos.map(enriquecerProduto) : salvo.produtos
   const baseEnriquecida = precisaEnriquecer(base) ? base.map(enriquecerProduto) : base
@@ -42,22 +43,24 @@ export function validarCatalogoImportado(dados: unknown): ProdutoMercado[] {
       throw new Error(`"${p.nome}": código de barras inválido.`)
     }
   }
-  return produtos.map((p, i) => ({
-    id: typeof p.id === 'string' && p.id ? p.id : `importado-${i + 1}`,
-    nome: (p.nome as string).trim(),
-    categoria: typeof p.categoria === 'string' && p.categoria ? p.categoria : 'Geral',
-    grupo: typeof p.grupo === 'string' && p.grupo ? p.grupo : undefined,
-    subgrupo: typeof p.subgrupo === 'string' && p.subgrupo ? p.subgrupo : undefined,
-    unidade: (p.unidade === 'UN' ? 'UN' : 'KG') as ProdutoMercado['unidade'],
-    preco: p.preco as number,
-    custoMedio: typeof p.custoMedio === 'number' ? p.custoMedio : 0,
-    margemAlvo: 0.3,
-    fornecedor: typeof p.fornecedor === 'string' ? p.fornecedor : 'A definir',
-    ativo: true,
-    codigoBarras: p.codigoBarras,
-    plu: typeof p.plu === 'string' ? p.plu : undefined,
-    estoqueMinimo: 0,
-    estoqueAlvo: 0,
-    lotes: [] as ProdutoMercado['lotes'],
-  })).map(enriquecerProduto)
+  return produtos
+    .map((p, i) => ({
+      id: typeof p.id === 'string' && p.id ? p.id : `importado-${i + 1}`,
+      nome: (p.nome as string).trim(),
+      categoria: typeof p.categoria === 'string' && p.categoria ? p.categoria : 'Geral',
+      grupo: typeof p.grupo === 'string' && p.grupo ? p.grupo : undefined,
+      subgrupo: typeof p.subgrupo === 'string' && p.subgrupo ? p.subgrupo : undefined,
+      unidade: (p.unidade === 'UN' ? 'UN' : 'KG') as ProdutoMercado['unidade'],
+      preco: p.preco as number,
+      custoMedio: typeof p.custoMedio === 'number' ? p.custoMedio : 0,
+      margemAlvo: 0.3,
+      fornecedor: typeof p.fornecedor === 'string' ? p.fornecedor : 'A definir',
+      ativo: true,
+      codigoBarras: p.codigoBarras,
+      plu: typeof p.plu === 'string' ? p.plu : undefined,
+      estoqueMinimo: 0,
+      estoqueAlvo: 0,
+      lotes: [] as ProdutoMercado['lotes'],
+    }))
+    .map(enriquecerProduto)
 }

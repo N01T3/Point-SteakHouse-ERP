@@ -100,7 +100,13 @@ export const PRODUTOS_MOCK: ProdutoMercado[] = [
     estoqueMinimo: 10,
     estoqueAlvo: 30,
     lotes: [
-      { lote: 'L2399', validade: validadeEm(-1), quantidade: 4.0, estado: 'BLOQUEADO', motivoBloqueio: 'Vencido — retirar da venda' },
+      {
+        lote: 'L2399',
+        validade: validadeEm(-1),
+        quantidade: 4.0,
+        estado: 'BLOQUEADO',
+        motivoBloqueio: 'Vencido — retirar da venda',
+      },
       { lote: 'L2412', validade: validadeEm(7), quantidade: 11.0, estado: 'LIBERADO' },
     ],
   },
@@ -119,7 +125,15 @@ export const PRODUTOS_MOCK: ProdutoMercado[] = [
     plu: '106',
     estoqueMinimo: 5,
     estoqueAlvo: 15,
-    lotes: [{ lote: 'L2395', validade: validadeEm(-2), quantidade: 2.5, estado: 'BLOQUEADO', motivoBloqueio: 'Vencido — retirar da venda' }],
+    lotes: [
+      {
+        lote: 'L2395',
+        validade: validadeEm(-2),
+        quantidade: 2.5,
+        estado: 'BLOQUEADO',
+        motivoBloqueio: 'Vencido — retirar da venda',
+      },
+    ],
   },
   {
     id: 'maminha',
@@ -136,7 +150,15 @@ export const PRODUTOS_MOCK: ProdutoMercado[] = [
     plu: '107',
     estoqueMinimo: 8,
     estoqueAlvo: 20,
-    lotes: [{ lote: 'L2413', validade: validadeEm(5), quantidade: 9.8, estado: 'QUARENTENA', motivoBloqueio: 'Aguardando conferência de temperatura' }],
+    lotes: [
+      {
+        lote: 'L2413',
+        validade: validadeEm(5),
+        quantidade: 9.8,
+        estado: 'QUARENTENA',
+        motivoBloqueio: 'Aguardando conferência de temperatura',
+      },
+    ],
   },
   {
     id: 'arroz',
@@ -391,7 +413,21 @@ export const CLIENTES_FIADO_MOCK: ClienteFiado[] = [
 ]
 
 export const FORNECEDORES_MOCK: Fornecedor[] = [
-  { id: 'for-frig', nome: 'Frigorífico Parceiro', contato: '(44) 90011-2233', leadTimeDias: 2, pedidoMinimo: 50, criadoEm: '2026-01-05T00:00:00' },
-  { id: 'for-dist', nome: 'Distribuidora Central', contato: '(44) 90022-3344', leadTimeDias: 3, pedidoMinimo: 100, criadoEm: '2026-01-05T00:00:00' },
+  {
+    id: 'for-frig',
+    nome: 'Frigorífico Parceiro',
+    contato: '(44) 90011-2233',
+    leadTimeDias: 2,
+    pedidoMinimo: 50,
+    criadoEm: '2026-01-05T00:00:00',
+  },
+  {
+    id: 'for-dist',
+    nome: 'Distribuidora Central',
+    contato: '(44) 90022-3344',
+    leadTimeDias: 3,
+    pedidoMinimo: 100,
+    criadoEm: '2026-01-05T00:00:00',
+  },
   { id: 'for-suinos', nome: 'Suínos do Sul', leadTimeDias: 4, criadoEm: '2026-02-10T00:00:00' },
 ]

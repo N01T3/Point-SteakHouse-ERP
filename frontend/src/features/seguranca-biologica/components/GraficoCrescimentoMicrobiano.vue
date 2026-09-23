@@ -31,7 +31,12 @@ function escalaY(valor: number): number {
 }
 
 const caminhoDaLinha = computed(() =>
-  props.pontos.map((ponto, indice) => `${indice === 0 ? 'M' : 'L'}${escalaX(ponto.horas)},${escalaY(ponto.logCfuPorGrama)}`).join(' '),
+  props.pontos
+    .map(
+      (ponto, indice) =>
+        `${indice === 0 ? 'M' : 'L'}${escalaX(ponto.horas)},${escalaY(ponto.logCfuPorGrama)}`,
+    )
+    .join(' '),
 )
 
 const yDoLimite = computed(() => escalaY(props.limiteDeAcaoLog))
@@ -90,7 +95,13 @@ const linhasParaTabela = computed(() =>
         :y2="escalaY(marca)"
         class="linha-grade"
       />
-      <text v-for="marca in marcasY" :key="`rotulo-y-${marca}`" :x="MARGEM.esquerda - 8" :y="escalaY(marca)" class="rotulo-eixo eixo-y">
+      <text
+        v-for="marca in marcasY"
+        :key="`rotulo-y-${marca}`"
+        :x="MARGEM.esquerda - 8"
+        :y="escalaY(marca)"
+        class="rotulo-eixo eixo-y"
+      >
         {{ marca }}
       </text>
       <text
@@ -110,7 +121,13 @@ const linhasParaTabela = computed(() =>
         :height="Math.max(0, yDoLimite - MARGEM.superior)"
         class="area-acima-do-limite"
       />
-      <line :x1="MARGEM.esquerda" :x2="LARGURA - MARGEM.direita" :y1="yDoLimite" :y2="yDoLimite" class="linha-limite" />
+      <line
+        :x1="MARGEM.esquerda"
+        :x2="LARGURA - MARGEM.direita"
+        :y1="yDoLimite"
+        :y2="yDoLimite"
+        class="linha-limite"
+      />
 
       <path :d="caminhoDaLinha" class="linha-crescimento" />
 
@@ -122,7 +139,12 @@ const linhasParaTabela = computed(() =>
           :y2="ALTURA - MARGEM.inferior"
           class="linha-crosshair"
         />
-        <circle :cx="escalaX(pontoAtivo.horas)" :cy="escalaY(pontoAtivo.logCfuPorGrama)" r="4" class="ponto-ativo" />
+        <circle
+          :cx="escalaX(pontoAtivo.horas)"
+          :cy="escalaY(pontoAtivo.logCfuPorGrama)"
+          r="4"
+          class="ponto-ativo"
+        />
       </template>
     </svg>
 

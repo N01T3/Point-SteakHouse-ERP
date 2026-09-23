@@ -121,18 +121,78 @@ export interface ItemDeMenu {
 }
 
 export const ITENS_DE_MENU: ItemDeMenu[] = [
-  { rota: 'dashboard', titulo: 'Dashboard', secao: 'gestao', papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR'] },
-  { rota: 'mercado', titulo: 'Mercado', secao: 'operacao', papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'CAIXA'] },
-  { rota: 'acougueiro', titulo: 'Açougue', secao: 'operacao', papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'ACOUGUEIRO'] },
-  { rota: 'maturacao', titulo: 'Câmara de Maturação', secao: 'operacao', papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'ACOUGUEIRO'] },
-  { rota: 'seguranca-biologica', titulo: 'Segurança Biológica', secao: 'operacao', papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'ACOUGUEIRO'] },
-  { rota: 'desossa-subprodutos', titulo: 'Desossa & Subprodutos', secao: 'operacao', papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'ACOUGUEIRO'] },
-  { rota: 'clientes', titulo: 'Clientes', secao: 'gestao', papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR'] },
-  { rota: 'estoque', titulo: 'Estoque', secao: 'gestao', papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR'] },
-  { rota: 'financeiro', titulo: 'Finanças', secao: 'gestao', papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR'] },
-  { rota: 'administrador', titulo: 'Administração', secao: 'administracao', papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR'] },
-  { rota: 'acesso', titulo: 'Acesso e Auditoria', secao: 'administracao', papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR'] },
-  { rota: 'configuracoes', titulo: 'Configurações', secao: 'administracao', papeisPermitidos: ['PROPRIETARIO'] },
+  {
+    rota: 'dashboard',
+    titulo: 'Dashboard',
+    secao: 'gestao',
+    papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR'],
+  },
+  {
+    rota: 'mercado',
+    titulo: 'Mercado',
+    secao: 'operacao',
+    papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'CAIXA'],
+  },
+  {
+    rota: 'acougueiro',
+    titulo: 'Açougue',
+    secao: 'operacao',
+    papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'ACOUGUEIRO'],
+  },
+  {
+    rota: 'maturacao',
+    titulo: 'Câmara de Maturação',
+    secao: 'operacao',
+    papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'ACOUGUEIRO'],
+  },
+  {
+    rota: 'seguranca-biologica',
+    titulo: 'Segurança Biológica',
+    secao: 'operacao',
+    papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'ACOUGUEIRO'],
+  },
+  {
+    rota: 'desossa-subprodutos',
+    titulo: 'Desossa & Subprodutos',
+    secao: 'operacao',
+    papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'ACOUGUEIRO'],
+  },
+  {
+    rota: 'clientes',
+    titulo: 'Clientes',
+    secao: 'gestao',
+    papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR'],
+  },
+  {
+    rota: 'estoque',
+    titulo: 'Estoque',
+    secao: 'gestao',
+    papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR'],
+  },
+  {
+    rota: 'financeiro',
+    titulo: 'Finanças',
+    secao: 'gestao',
+    papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR'],
+  },
+  {
+    rota: 'administrador',
+    titulo: 'Administração',
+    secao: 'administracao',
+    papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR'],
+  },
+  {
+    rota: 'acesso',
+    titulo: 'Acesso e Auditoria',
+    secao: 'administracao',
+    papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR'],
+  },
+  {
+    rota: 'configuracoes',
+    titulo: 'Configurações',
+    secao: 'administracao',
+    papeisPermitidos: ['PROPRIETARIO'],
+  },
 ]
 
 export function filtrarMenuPorPapel(papel: PapelUsuario): ItemDeMenu[] {

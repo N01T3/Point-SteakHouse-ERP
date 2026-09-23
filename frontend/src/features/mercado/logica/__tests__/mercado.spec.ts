@@ -70,7 +70,15 @@ describe('FEFO e validade', () => {
 describe('promoções', () => {
   const promos: Promocao[] = [
     { id: 'm', descricao: 'Markdown', tipo: 'markdown_validade', percentual: 15, diasLimite: 2, ativa: true },
-    { id: 'q', descricao: 'Qtd', tipo: 'quantidade', produtoId: 'p1', percentual: 10, quantidadeMinima: 3, ativa: true },
+    {
+      id: 'q',
+      descricao: 'Qtd',
+      tipo: 'quantidade',
+      produtoId: 'p1',
+      percentual: 10,
+      quantidadeMinima: 3,
+      ativa: true,
+    },
   ]
 
   it('aplica markdown quando vence em até o limite', () => {

@@ -47,15 +47,31 @@ describe('cargos personalizados', () => {
 
   it('não aprova duas vezes nem com papel errado', async () => {
     const store = useAcessoStore()
-    const cargo = store.solicitarCargo({ nome: 'X', descricao: '', permissoes: ['estoque.visualizar'] }, 'M', true)
+    const cargo = store.solicitarCargo(
+      { nome: 'X', descricao: '', permissoes: ['estoque.visualizar'] },
+      'M',
+      true,
+    )
     await expect(store.aprovarCargo(cargo.id, 'caixa', '123')).rejects.toThrow(/proprietário/i)
   })
 
   it('versiona alterações de permissão com motivo', () => {
     const store = useAcessoStore()
-    const cargo = store.solicitarCargo({ nome: 'Y', descricao: '', permissoes: ['estoque.visualizar'] }, 'M', true)
-    expect(() => store.alterarPermissoesCargo(cargo.id, ['estoque.visualizar'], 'Dono', '', true)).toThrow(/motivo/i)
-    store.alterarPermissoesCargo(cargo.id, ['estoque.visualizar', 'estoque.repor'], 'Dono', 'incluir reposição', true)
+    const cargo = store.solicitarCargo(
+      { nome: 'Y', descricao: '', permissoes: ['estoque.visualizar'] },
+      'M',
+      true,
+    )
+    expect(() => store.alterarPermissoesCargo(cargo.id, ['estoque.visualizar'], 'Dono', '', true)).toThrow(
+      /motivo/i,
+    )
+    store.alterarPermissoesCargo(
+      cargo.id,
+      ['estoque.visualizar', 'estoque.repor'],
+      'Dono',
+      'incluir reposição',
+      true,
+    )
     expect(cargo.versao).toBe(2)
     expect(cargo.historico).toHaveLength(1)
     expect(cargo.historico[0].antes).toEqual(['estoque.visualizar'])

@@ -30,7 +30,9 @@ function escalaY(v: number): number {
 }
 
 function caminho(valores: number[]): string {
-  return valores.map((v, i) => `${i === 0 ? 'M' : 'L'}${escalaX(i).toFixed(1)},${escalaY(v).toFixed(1)}`).join(' ')
+  return valores
+    .map((v, i) => `${i === 0 ? 'M' : 'L'}${escalaX(i).toFixed(1)},${escalaY(v).toFixed(1)}`)
+    .join(' ')
 }
 
 const linhasGrade = computed(() => {
@@ -108,14 +110,50 @@ const temDados = computed(() => props.rotulos.length > 0 && props.series.some((s
 </template>
 
 <style scoped>
-.linha-container { display: flex; flex-direction: column; gap: 10px; }
-.legenda { display: flex; gap: 14px; flex-wrap: wrap; }
-.item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--cor-on-surface-variant); }
-.ponto { width: 9px; height: 9px; border-radius: 50%; }
-.grafico-svg { width: 100%; height: auto; }
-.grade { stroke: var(--cor-outline); stroke-width: 1; opacity: 0.6; }
-.rotulo { font-size: 9px; fill: var(--cor-on-surface-variant); }
-.eixo-y { text-anchor: end; dominant-baseline: middle; }
-.eixo-x { text-anchor: middle; }
-.vazio { font-size: 12.5px; color: var(--cor-on-surface-variant); }
+.linha-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.legenda {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--cor-on-surface-variant);
+}
+.ponto {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.grafico-svg {
+  width: 100%;
+  height: auto;
+}
+.grade {
+  stroke: var(--cor-outline);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+.rotulo {
+  font-size: 9px;
+  fill: var(--cor-on-surface-variant);
+}
+.eixo-y {
+  text-anchor: end;
+  dominant-baseline: middle;
+}
+.eixo-x {
+  text-anchor: middle;
+}
+.vazio {
+  font-size: 12.5px;
+  color: var(--cor-on-surface-variant);
+}
 </style>

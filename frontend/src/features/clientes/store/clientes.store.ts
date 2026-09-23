@@ -31,7 +31,9 @@ export const useClientesStore = defineStore('clientes', () => {
     const busca = termo.trim().toLowerCase()
     if (!busca) return clientes.value
     return clientes.value.filter(
-      (c) => c.nome.toLowerCase().includes(busca) || c.telefone?.replace(/\D/g, '').includes(busca.replace(/\D/g, '')),
+      (c) =>
+        c.nome.toLowerCase().includes(busca) ||
+        c.telefone?.replace(/\D/g, '').includes(busca.replace(/\D/g, '')),
     )
   }
 
@@ -99,12 +101,18 @@ export const useClientesStore = defineStore('clientes', () => {
   }
 
   /** Venda do caixa no fiado — mesma conta corrente, com número da venda. */
-  function registrarVendaFiado(clienteId: string, valor: number, vendaNumero: number, operador: string): LancamentoFiado {
+  function registrarVendaFiado(
+    clienteId: string,
+    valor: number,
+    vendaNumero: number,
+    operador: string,
+  ): LancamentoFiado {
     const cliente = clientes.value.find((c) => c.id === clienteId)
     if (!cliente) throw new Error('Cliente não encontrado.')
     if (!cliente.ativo) throw new Error('Cliente inativo — venda bloqueada.')
     if (!(valor > 0)) throw new Error('Valor inválido.')
-    if (cliente.saldo + valor > cliente.limite) throw new Error(`${cliente.nome} não tem limite para esta venda.`)
+    if (cliente.saldo + valor > cliente.limite)
+      throw new Error(`${cliente.nome} não tem limite para esta venda.`)
     cliente.saldo = Math.round((cliente.saldo + valor) * 100) / 100
     const lancamento: LancamentoFiado = {
       id: `l-${crypto.randomUUID()}`,
@@ -120,7 +128,13 @@ export const useClientesStore = defineStore('clientes', () => {
   }
 
   /** Estorno de fiado (cancelamento de venda). */
-  function estornarVendaFiado(clienteId: string, valor: number, vendaNumero: number, operador: string, motivo: string): void {
+  function estornarVendaFiado(
+    clienteId: string,
+    valor: number,
+    vendaNumero: number,
+    operador: string,
+    motivo: string,
+  ): void {
     const cliente = clientes.value.find((c) => c.id === clienteId)
     if (!cliente) return
     cliente.saldo = Math.round(Math.max(0, cliente.saldo - valor) * 100) / 100
@@ -140,12 +154,21 @@ export const useClientesStore = defineStore('clientes', () => {
   function salvarPreferencias(clienteId: string, cortes: string[], observacoes?: string): void {
     const cliente = clientes.value.find((c) => c.id === clienteId)
     if (!cliente) throw new Error('Cliente não encontrado.')
-    cliente.cortesPreferidos = cortes.map((c) => c.trim()).filter(Boolean).slice(0, 10)
+    cliente.cortesPreferidos = cortes
+      .map((c) => c.trim())
+      .filter(Boolean)
+      .slice(0, 10)
     cliente.observacoes = observacoes?.trim() || undefined
   }
 
   /** Reserva/encomenda de peça ou corte. */
-  function criarReserva(clienteId: string, descricao: string, quantidade: string, retirarEm: string | undefined, operador: string): ReservaCliente {
+  function criarReserva(
+    clienteId: string,
+    descricao: string,
+    quantidade: string,
+    retirarEm: string | undefined,
+    operador: string,
+  ): ReservaCliente {
     const cliente = clientes.value.find((c) => c.id === clienteId)
     if (!cliente) throw new Error('Cliente não encontrado.')
     if (!descricao.trim()) throw new Error('Descreva a peça ou corte reservado.')

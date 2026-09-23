@@ -66,14 +66,32 @@ function carregarDemo(): void {
     <div v-if="erro" class="erro">{{ erro }}</div>
 
     <div class="kpis">
-      <CartaoKpi titulo="Receita turno (real)" :valor="formatarMoeda(mercado.resumoOperacional.receita)" nota="Mercado" />
-      <CartaoKpi titulo="Margem turno (real)" :valor="formatarMoeda(mercado.resumoOperacional.margem)" nota="receita − CMV" />
-      <CartaoKpi titulo="Peças em maturação (real)" :valor="String(maturacao.pecas.length)" :nota="`${maturacao.pecasFinalizadas.length} finalizadas`" />
-      <CartaoKpi titulo="Fixos ativos" :valor="formatarMoeda(fin.totalCustosFixosAtivos)" :nota="`${bio.acoes.filter((a) => a.status === 'aberta').length} ações sanitárias abertas`" />
+      <CartaoKpi
+        titulo="Receita turno (real)"
+        :valor="formatarMoeda(mercado.resumoOperacional.receita)"
+        nota="Mercado"
+      />
+      <CartaoKpi
+        titulo="Margem turno (real)"
+        :valor="formatarMoeda(mercado.resumoOperacional.margem)"
+        nota="receita − CMV"
+      />
+      <CartaoKpi
+        titulo="Peças em maturação (real)"
+        :valor="String(maturacao.pecas.length)"
+        :nota="`${maturacao.pecasFinalizadas.length} finalizadas`"
+      />
+      <CartaoKpi
+        titulo="Fixos ativos"
+        :valor="formatarMoeda(fin.totalCustosFixosAtivos)"
+        :nota="`${bio.acoes.filter((a) => a.status === 'aberta').length} ações sanitárias abertas`"
+      />
     </div>
     <div v-if="mercado.vendas.length === 0" class="demo-linha">
       <span class="demo-texto">Sem movimento no turno — os gráficos reais ficam zerados.</span>
-      <button type="button" class="botao-detalhes" @click="carregarDemo">Carregar vendas de demonstração</button>
+      <button type="button" class="botao-detalhes" @click="carregarDemo">
+        Carregar vendas de demonstração
+      </button>
       <span v-if="erroDemo" class="erro">{{ erroDemo }}</span>
     </div>
 
@@ -145,7 +163,7 @@ function carregarDemo(): void {
 }
 
 .titulo {
-  font-family: 'Bodoni Moda', serif;
+  font-family: var(--fonte-display);
   font-size: 30px;
   font-weight: 600;
   color: var(--cor-on-bg);

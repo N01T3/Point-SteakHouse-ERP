@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { PRODUTOS_MOCK } from '../../mock/mercado.mock'
 import type { ProdutoMercado } from '../../tipos'
 import {
-  VERSAO_CATALOGO,
   mesclarCatalogo,
   serializarCatalogo,
+  VERSAO_CATALOGO,
   validarCatalogoImportado,
 } from '../catalogoPersistido'
 
@@ -21,13 +21,21 @@ describe('catálogo persistido', () => {
 
   it('mesma versão: local manda', () => {
     const local = [{ ...PRODUTOS_MOCK[0], preco: 999 }]
-    const mesclado = mesclarCatalogo(PRODUTOS_MOCK, { versao: VERSAO_CATALOGO, salvoEm: '', produtos: local as ProdutoMercado[] })
+    const mesclado = mesclarCatalogo(PRODUTOS_MOCK, {
+      versao: VERSAO_CATALOGO,
+      salvoEm: '',
+      produtos: local as ProdutoMercado[],
+    })
     expect(mesclado[0].preco).toBe(999)
   })
 
   it('versão antiga: mantém locais e acrescenta novos da base', () => {
     const local = [{ ...PRODUTOS_MOCK[0], preco: 999 }]
-    const mesclado = mesclarCatalogo(PRODUTOS_MOCK, { versao: 1, salvoEm: '', produtos: local as ProdutoMercado[] })
+    const mesclado = mesclarCatalogo(PRODUTOS_MOCK, {
+      versao: 1,
+      salvoEm: '',
+      produtos: local as ProdutoMercado[],
+    })
     expect(mesclado[0].preco).toBe(999)
     expect(mesclado).toHaveLength(PRODUTOS_MOCK.length)
     expect(mesclado.some((p) => p.id === 'cafe')).toBe(true)

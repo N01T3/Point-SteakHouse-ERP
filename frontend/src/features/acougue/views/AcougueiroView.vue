@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { useMercadoStore } from '../../mercado/store/mercado.store'
 import { useDesossaStore } from '../../desossa-subprodutos/store/desossa.store'
 import { useMaturacaoStore } from '../../maturacao/store/maturacao.store'
+import { useMercadoStore } from '../../mercado/store/mercado.store'
 import { useSegurancaBiologicaStore } from '../../seguranca-biologica/store/seguranca-biologica.store'
 
 const mercado = useMercadoStore()
@@ -25,19 +25,45 @@ const ocultar = ref(new Set<string>())
 
 const tarefasReais = computed<TarefaDoAcougue[]>(() => {
   const lista: TarefaDoAcougue[] = []
-  const quarentena = mercado.produtos.flatMap((p) => p.lotes.filter((l) => l.estado === 'QUARENTENA').map((l) => ({ p, l })))
+  const quarentena = mercado.produtos.flatMap((p) =>
+    p.lotes.filter((l) => l.estado === 'QUARENTENA').map((l) => ({ p, l })),
+  )
   for (const q of quarentena.slice(0, 3)) {
-    lista.push({ id: `q-${q.p.id}-${q.l.lote}`, titulo: 'Liberar quarentena', detalhe: `${q.p.nome} · lote ${q.l.lote}`, destino: 'estoque', concluida: false })
+    lista.push({
+      id: `q-${q.p.id}-${q.l.lote}`,
+      titulo: 'Liberar quarentena',
+      detalhe: `${q.p.nome} · lote ${q.l.lote}`,
+      destino: 'estoque',
+      concluida: false,
+    })
   }
   for (const peca of desossa.pecasBrutasPendentes.slice(0, 3)) {
-    lista.push({ id: `d-${peca.id}`, titulo: 'Desossar peça', detalhe: `${peca.tipoDePeca} · ${peca.pesoKg} kg`, destino: 'desossa-subprodutos', concluida: false })
+    lista.push({
+      id: `d-${peca.id}`,
+      titulo: 'Desossar peça',
+      detalhe: `${peca.tipoDePeca} · ${peca.pesoKg} kg`,
+      destino: 'desossa-subprodutos',
+      concluida: false,
+    })
   }
   for (const peca of maturacao.pecas.slice(0, 3)) {
-    lista.push({ id: `m-${peca.id}`, titulo: 'Conferir maturação', detalhe: `${peca.nome} · ${peca.diasAtual}/${peca.diasTotal} dias`, destino: 'maturacao', concluida: false })
+    lista.push({
+      id: `m-${peca.id}`,
+      titulo: 'Conferir maturação',
+      detalhe: `${peca.nome} · ${peca.diasAtual}/${peca.diasTotal} dias`,
+      destino: 'maturacao',
+      concluida: false,
+    })
   }
   const criticos = bio.ccps.filter((c) => c.status !== 'conforme').slice(0, 2)
   for (const c of criticos) {
-    lista.push({ id: `b-${c.id}`, titulo: 'Verificar ponto sanitário', detalhe: c.nome, destino: 'seguranca-biologica', concluida: false })
+    lista.push({
+      id: `b-${c.id}`,
+      titulo: 'Verificar ponto sanitário',
+      detalhe: c.nome,
+      destino: 'seguranca-biologica',
+      concluida: false,
+    })
   }
   return lista
 })
@@ -69,9 +95,7 @@ const pendentes = () => todas.value.filter((t) => !t.concluida && !ocultar.value
       </div>
     </div>
 
-    <div v-if="pendentes().length === 0" class="vazio">
-      Tudo em dia. Nenhuma tarefa de carne pendente.
-    </div>
+    <div v-if="pendentes().length === 0" class="vazio">Tudo em dia. Nenhuma tarefa de carne pendente.</div>
 
     <div v-for="tarefa in pendentes()" :key="tarefa.id" class="cartao-tarefa">
       <div class="tarefa-info">
@@ -79,7 +103,9 @@ const pendentes = () => todas.value.filter((t) => !t.concluida && !ocultar.value
         <div class="tarefa-detalhe">{{ tarefa.detalhe }}</div>
       </div>
       <div class="tarefa-acoes">
-        <button type="button" class="botao-primario" @click="concluirTarefa(tarefa.id)">Confirmar etapa</button>
+        <button type="button" class="botao-primario" @click="concluirTarefa(tarefa.id)">
+          Confirmar etapa
+        </button>
         <RouterLink :to="{ name: tarefa.destino }" class="link">abrir área →</RouterLink>
       </div>
     </div>
@@ -102,7 +128,7 @@ const pendentes = () => todas.value.filter((t) => !t.concluida && !ocultar.value
 }
 
 .cabecalho .titulo {
-  font-family: 'Bodoni Moda', serif;
+  font-family: var(--fonte-display);
   font-size: 30px;
   font-weight: 600;
   color: var(--cor-on-bg);

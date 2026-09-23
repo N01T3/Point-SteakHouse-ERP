@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../../features/auth/store/auth.store'
-import { podeAcessarRota, type PapelUsuario } from '../../shared/tipos/papel'
+import { siteExpirado } from '../../shared/amostra/prazo-do-site'
+import { type PapelUsuario, podeAcessarRota } from '../../shared/tipos/papel'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -50,19 +51,28 @@ const router = createRouter({
       path: '/maturacao',
       name: 'maturacao',
       component: () => import('../../features/maturacao/views/CamaraDeMaturacaoView.vue'),
-      meta: { titulo: 'Câmara de Maturação', papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'ACOUGUEIRO'] },
+      meta: {
+        titulo: 'Câmara de Maturação',
+        papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'ACOUGUEIRO'],
+      },
     },
     {
       path: '/seguranca-biologica',
       name: 'seguranca-biologica',
       component: () => import('../../features/seguranca-biologica/views/SegurancaBiologicaView.vue'),
-      meta: { titulo: 'Segurança Biológica', papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'ACOUGUEIRO'] },
+      meta: {
+        titulo: 'Segurança Biológica',
+        papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'ACOUGUEIRO'],
+      },
     },
     {
       path: '/desossa-subprodutos',
       name: 'desossa-subprodutos',
       component: () => import('../../features/desossa-subprodutos/views/DesossaSubprodutosView.vue'),
-      meta: { titulo: 'Desossa & Subprodutos', papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'ACOUGUEIRO'] },
+      meta: {
+        titulo: 'Desossa & Subprodutos',
+        papeisPermitidos: ['PROPRIETARIO', 'ADMINISTRADOR', 'ACOUGUEIRO'],
+      },
     },
     {
       path: '/clientes',
@@ -98,6 +108,10 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
+  if (siteExpirado()) {
+    useAuthStore().sair()
+    return false
+  }
   const store = useAuthStore()
   if (!store.autenticado) return true
   if (!podeAcessarRota(store.papel, to.meta.papeisPermitidos)) {

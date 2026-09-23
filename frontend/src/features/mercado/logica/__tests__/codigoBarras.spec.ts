@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  digitoVerificadorEAN,
-  interpretarCodigo,
-  validarEAN13,
-} from '../codigoBarras'
+import { digitoVerificadorEAN, interpretarCodigo, validarEAN13 } from '../codigoBarras'
 
 describe('EAN-13 / GTIN', () => {
   it('calcula o dígito verificador (módulo 10)', () => {

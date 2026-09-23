@@ -50,7 +50,7 @@ defineEmits<{ fechar: [] }>()
 }
 
 .titulo {
-  font-family: 'Bodoni Moda', serif;
+  font-family: var(--fonte-display);
   font-size: 18px;
   font-weight: 600;
   color: var(--cor-on-surface);

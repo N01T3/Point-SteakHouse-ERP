@@ -34,13 +34,7 @@ export interface CargoPersonalizado {
   criadoEm: string // ISO
 }
 
-export type TipoEventoAuditoria =
-  | 'login'
-  | 'logout'
-  | 'login-negado'
-  | 'usuario'
-  | 'cargo'
-  | 'permissao'
+export type TipoEventoAuditoria = 'login' | 'logout' | 'login-negado' | 'usuario' | 'cargo' | 'permissao'
 
 export interface EventoAuditoria {
   id: string

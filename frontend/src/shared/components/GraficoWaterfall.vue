@@ -42,17 +42,56 @@ function altura(d: DegrauWaterfall): number {
 </template>
 
 <style scoped>
-.wf { display: flex; gap: 10px; align-items: stretch; }
-.coluna { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.valor { font-size: 10.5px; color: var(--cor-on-surface-variant); white-space: nowrap; }
-.trilho { position: relative; width: 100%; max-width: 44px; height: 150px; }
-.barra { position: absolute; left: 0; right: 0; border-radius: 6px 6px 3px 3px; }
-.barra.pos { background: var(--cor-primary); }
-.barra.neg { background: var(--cor-error); }
-.barra.total { background: var(--cor-secondary); }
-.rotulo { font-size: 10.5px; color: var(--cor-on-surface-variant); text-align: center; }
+.wf {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+.coluna {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.valor {
+  font-size: 10.5px;
+  color: var(--cor-on-surface-variant);
+  white-space: nowrap;
+}
+.trilho {
+  position: relative;
+  width: 100%;
+  max-width: 44px;
+  height: 150px;
+}
+.barra {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-radius: 6px 6px 3px 3px;
+}
+.barra.pos {
+  background: var(--cor-primary);
+}
+.barra.neg {
+  background: var(--cor-error);
+}
+.barra.total {
+  background: var(--cor-secondary);
+}
+.rotulo {
+  font-size: 10.5px;
+  color: var(--cor-on-surface-variant);
+  text-align: center;
+}
 @media (max-width: 640px) {
-  .wf { overflow-x: auto; }
-  .coluna { min-width: 64px; }
+  .wf {
+    overflow-x: auto;
+  }
+  .coluna {
+    min-width: 64px;
+  }
 }
 </style>

@@ -1,4 +1,12 @@
 import { onMounted, onUnmounted, ref } from 'vue'
+import type {
+  AlertaDeEstoque,
+  CorteMaisVendido,
+  DistribuicaoDoMercado,
+  FaturamentoDoDia,
+  PecaEmMaturacao,
+  ResumoGerencial,
+} from '../services/dashboard.api'
 import {
   obterAlertasEstoque,
   obterCamaraMaturacao,
@@ -9,14 +17,6 @@ import {
   // Fonte de dados trocada para mocks enquanto o backend não roda localmente —
   // trocar de volta para './dashboard.api' quando o Postgres estiver disponível.
 } from '../services/dashboard.mock'
-import type {
-  AlertaDeEstoque,
-  CorteMaisVendido,
-  DistribuicaoDoMercado,
-  FaturamentoDoDia,
-  PecaEmMaturacao,
-  ResumoGerencial,
-} from '../services/dashboard.api'
 
 const INTERVALO_DE_ATUALIZACAO_MS = 45_000
 

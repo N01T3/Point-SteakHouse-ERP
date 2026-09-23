@@ -29,7 +29,12 @@ describe('normalizarPlu', () => {
 describe('resolverBipe', () => {
   it('EAN de produto unitário adiciona 1 direto', () => {
     const r = resolverBipe('7891234000187', PRODUTOS_MOCK) // café
-    expect(r).toEqual({ tipo: 'adicionar', produtoId: 'cafe', quantidade: 1, origem: 'bip Café Torrado 500g' })
+    expect(r).toEqual({
+      tipo: 'adicionar',
+      produtoId: 'cafe',
+      quantidade: 1,
+      origem: 'bip Café Torrado 500g',
+    })
   })
 
   it('EAN de produto por peso pede pesagem', () => {

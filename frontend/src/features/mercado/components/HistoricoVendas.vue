@@ -2,8 +2,8 @@
 import { computed, ref } from 'vue'
 import { useFormatador } from '../../../shared/composables/useFormatador'
 import { useAuthStore } from '../../auth/store/auth.store'
-import { useMercadoStore } from '../store/mercado.store'
 import { useClientesStore } from '../../clientes/store/clientes.store'
+import { useMercadoStore } from '../store/mercado.store'
 import type { Venda } from '../tipos'
 import CupomVenda from './CupomVenda.vue'
 import ModalDevolucao from './ModalDevolucao.vue'
@@ -48,8 +48,16 @@ function confirmarCancelamento(): void {
     const operador = auth.usuario?.nome ?? 'operador'
     store.cancelarVenda(venda.id, motivoCancelamento.value, operador)
     if (venda.valorFiado > 0) {
-      const id = venda.pagamento.clienteId ?? venda.pagamento.parcelas?.find((p) => p.forma === 'FIADO')?.clienteId
-      if (id) clientesStore.estornarVendaFiado(id, venda.valorFiado, venda.numero, operador, motivoCancelamento.value)
+      const id =
+        venda.pagamento.clienteId ?? venda.pagamento.parcelas?.find((p) => p.forma === 'FIADO')?.clienteId
+      if (id)
+        clientesStore.estornarVendaFiado(
+          id,
+          venda.valorFiado,
+          venda.numero,
+          operador,
+          motivoCancelamento.value,
+        )
     }
     cancelando.value = null
     motivoCancelamento.value = ''
@@ -60,260 +68,76 @@ function confirmarCancelamento(): void {
 </script>
 
 <template>
-  <div class="historico">
-    <div v-if="erro" class="erro" role="alert">{{ erro }}</div>
-    <div v-if="store.vendas.length === 0" class="vazio">Nenhuma venda neste turno ainda.</div>
-
-    <div v-for="venda in store.vendas" :key="venda.id" class="cartao" :class="{ cancelada: venda.estado === 'CANCELADA' }">
-      <div class="linha-topo">
-        <strong>#{{ venda.numero }} · {{ hora(venda.criadaEm) }}</strong>
-        <span class="estado">{{ ROTULO_ESTADO[venda.estado] }}</span>
-      </div>
-      <div class="detalhe">
-        {{ venda.itens.map((i) => `${i.nome} × ${i.quantidade}`).join(' · ') }}
-      </div>
-      <div v-if="venda.estado === 'CANCELADA' && venda.motivoCancelamento" class="detalhe">
-        Motivo: {{ venda.motivoCancelamento }}{{ venda.canceladaPor ? ` · por ${venda.canceladaPor}` : '' }}
-      </div>
-      <div class="linha-base">
-        <span>{{ ROTULO_FORMA[venda.pagamento.forma] }}{{ venda.pagamento.clienteNome ? ` · ${venda.pagamento.clienteNome}` : '' }}</span>
-        <strong>{{ formatarMoeda(venda.total) }}</strong>
-      </div>
-      <div class="linha-base">
-        <span v-if="!venda.sincronizada" class="pendente">pendente de sincronização</span>
-        <span v-else></span>
-        <span class="acoes">
-          <button type="button" class="link" @click="vendoCupom = venda">
-            cupom{{ (venda.reimpressoes ?? 0) > 0 ? ` (${venda.reimpressoes})` : '' }}
-          </button>
-          <button
-            v-if="venda.estado === 'CONCLUIDA'"
-            type="button"
-            class="link"
-            @click="devolvendo = venda"
+  <div class="d-flex flex-column ga-3">
+    <v-alert v-if="erro" type="error" variant="tonal" density="compact">{{ erro }}</v-alert>
+    <v-alert v-if="store.vendas.length === 0" type="info" variant="tonal" density="compact"
+      >Nenhuma venda neste turno ainda.</v-alert
+    >
+    <v-card v-for="venda in store.vendas" :key="venda.id" rounded="xl">
+      <v-card-text>
+        <div class="d-flex justify-space-between align-center">
+          <strong>#{{ venda.numero }} - {{ hora(venda.criadaEm) }}</strong>
+          <v-chip
+            size="small"
+            :color="
+              venda.estado === 'CANCELADA' ? 'error' : venda.estado === 'CONCLUIDA' ? 'success' : 'warning'
+            "
+            variant="tonal"
+            >{{ ROTULO_ESTADO[venda.estado] }}</v-chip
           >
-            devolver
-          </button>
-          <button
-            v-if="venda.estado === 'CONCLUIDA' && podeEstornar"
-            type="button"
-            class="link perigo"
-            @click="cancelando = venda; motivoCancelamento = ''"
-          >
-            cancelar
-          </button>
-        </span>
-      </div>
-    </div>
-
+        </div>
+        <div class="text-body-2 text-medium-emphasis mt-1">
+          {{ venda.itens.map((i) => `${i.nome} x ${i.quantidade}`).join(' - ') }}
+        </div>
+        <div class="d-flex justify-space-between align-center mt-2">
+          <span class="text-caption">{{ ROTULO_FORMA[venda.pagamento.forma] }}</span>
+          <strong>{{ formatarMoeda(venda.total) }}</strong>
+        </div>
+      </v-card-text>
+      <v-card-actions>
+        <v-btn size="small" variant="text" prepend-icon="mdi-receipt-text" @click="vendoCupom = venda"
+          >Cupom</v-btn
+        >
+        <v-btn
+          v-if="podeEstornar && venda.estado === 'CONCLUIDA'"
+          size="small"
+          variant="text"
+          prepend-icon="mdi-undo"
+          @click="devolvendo = venda"
+          >Devolver</v-btn
+        >
+        <v-btn
+          v-if="podeEstornar && venda.estado === 'CONCLUIDA'"
+          size="small"
+          variant="text"
+          color="error"
+          @click="cancelando = venda"
+          >Cancelar</v-btn
+        >
+      </v-card-actions>
+    </v-card>
+    <v-dialog
+      :model-value="cancelando !== null"
+      max-width="420"
+      @update:model-value="(v) => !v && (cancelando = null)"
+    >
+      <v-card rounded="xl">
+        <v-card-title>Cancelar venda</v-card-title>
+        <v-card-text><v-text-field v-model="motivoCancelamento" label="Motivo (obrigatorio)" /></v-card-text>
+        <v-card-actions
+          ><v-spacer /><v-btn variant="outlined" rounded="xl" @click="cancelando = null">Voltar</v-btn
+          ><v-btn color="error" variant="flat" rounded="xl" @click="confirmarCancelamento"
+            >Confirmar</v-btn
+          ></v-card-actions
+        >
+      </v-card>
+    </v-dialog>
     <ModalDevolucao
       v-if="devolvendo"
       :venda="devolvendo"
       @fechar="devolvendo = null"
       @concluida="devolvendo = null"
     />
-
-    <div v-if="cancelando" class="fundo" @click.self="cancelando = null">
-      <div class="modal" role="dialog" aria-label="Cancelar venda">
-        <div class="titulo">Cancelar venda #{{ cancelando.numero }}</div>
-        <p class="texto">O estoque volta ao lote e o fiado é estornado. O histórico é preservado.</p>
-        <label class="campo">
-          <span>Motivo (obrigatório)</span>
-          <input v-model="motivoCancelamento" type="text" placeholder="ex.: erro de bipagem, desistência…" />
-        </label>
-        <div class="acoes-modal">
-          <button type="button" class="botao-secundario" @click="cancelando = null">Voltar</button>
-          <button type="button" class="botao-primario" @click="confirmarCancelamento">Confirmar cancelamento</button>
-        </div>
-      </div>
-    </div>
-
-    <CupomVenda
-      v-if="vendoCupom"
-      :venda="vendoCupom"
-      @fechar="vendoCupom = null"
-    />
+    <CupomVenda v-if="vendoCupom" :venda="vendoCupom" @fechar="vendoCupom = null" />
   </div>
 </template>
-
-<style scoped>
-.historico {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.vazio {
-  font-size: 13px;
-  color: var(--cor-on-surface-variant);
-}
-
-.cartao {
-  background: var(--cor-surface);
-  border: 1px solid var(--cor-outline);
-  border-radius: 14px;
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.cartao.cancelada {
-  opacity: 0.75;
-}
-
-.erro {
-  font-size: 13px;
-  color: var(--cor-error);
-  background: var(--cor-error-container);
-  border-radius: 10px;
-  padding: 10px 14px;
-}
-
-.linha-topo {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  color: var(--cor-on-surface);
-}
-
-.estado {
-  font-size: 12px;
-  color: var(--cor-on-surface-variant);
-}
-
-.detalhe {
-  font-size: 12.5px;
-  color: var(--cor-on-surface-variant);
-}
-
-.linha-base {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  color: var(--cor-on-surface);
-}
-
-.pendente {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--cor-error);
-}
-
-.link {
-  background: none;
-  border: none;
-  padding: 0;
-  font-family: inherit;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--cor-primary);
-  cursor: pointer;
-}
-
-.link.perigo {
-  color: var(--cor-error);
-}
-
-.acoes {
-  display: flex;
-  gap: 12px;
-}
-
-.fundo {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  z-index: 60;
-}
-
-@media (min-width: 640px) {
-  .fundo {
-    align-items: center;
-    padding: 24px;
-  }
-}
-
-.modal {
-  width: min(440px, 100%);
-  max-height: 92vh;
-  overflow-y: auto;
-  background: var(--cor-surface);
-  border-radius: 20px 20px 0 0;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-@media (min-width: 640px) {
-  .modal {
-    border-radius: 20px;
-  }
-}
-
-.titulo {
-  font-family: 'Bodoni Moda', serif;
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--cor-on-surface);
-}
-
-.texto {
-  margin: 0;
-  font-size: 13px;
-  color: var(--cor-on-surface-variant);
-}
-
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 12.5px;
-  color: var(--cor-on-surface-variant);
-}
-
-.campo input {
-  padding: 11px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--cor-outline);
-  background: var(--cor-bg);
-  color: var(--cor-on-surface);
-  font-family: inherit;
-  font-size: 14px;
-}
-
-.acoes-modal {
-  display: flex;
-  gap: 8px;
-}
-
-.botao-primario {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  border-radius: 100px;
-  background: var(--cor-primary);
-  color: var(--cor-on-primary);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.botao-secundario {
-  padding: 12px 18px;
-  border-radius: 100px;
-  border: 1px solid var(--cor-outline);
-  background: var(--cor-surface);
-  color: var(--cor-on-surface);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-</style>

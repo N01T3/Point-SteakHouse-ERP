@@ -8,8 +8,8 @@ defineProps<{ alertas: AlertaDeEstoque[] }>()
   <div v-for="alerta in alertas" :key="alerta.nome" class="banner">
     <span class="icone">⚠</span>
     <div class="texto">
-      <strong>Estoque baixo:</strong> {{ alerta.nome }} — restam {{ alerta.quantidadeAtual }}{{ alerta.unidade }}.
-      Reposição sugerida ainda hoje.
+      <strong>Estoque baixo:</strong> {{ alerta.nome }} — restam {{ alerta.quantidadeAtual
+      }}{{ alerta.unidade }}. Reposição sugerida ainda hoje.
     </div>
   </div>
 </template>

@@ -1,12 +1,12 @@
 // Agregações financeiras puras — testáveis, sem Vue.
 // Açougue/mercado: canal único (Mercado). Sem salão/cozinha/mesa.
 import {
-  SALDO_FIADO_INICIAL,
   type Desperdicio,
   type DiaFinanceiro,
   type Granularidade,
   type MargemPorItem,
   type Periodo,
+  SALDO_FIADO_INICIAL,
   type Visao,
 } from '../mock/financeiro.mock'
 
@@ -79,7 +79,10 @@ export function montarDre(resumo: ResumoFinanceiro, visao: Visao): LinhaDre[] {
   const receita = visao === 'caixa' ? resumo.receitaRecebida : resumo.receita
   const lucroBruto = receita - resumo.cmv
   return [
-    { rotulo: visao === 'caixa' ? 'Receita recebida (Mercado)' : 'Receita bruta (Mercado)', valor: Math.round(receita) },
+    {
+      rotulo: visao === 'caixa' ? 'Receita recebida (Mercado)' : 'Receita bruta (Mercado)',
+      valor: Math.round(receita),
+    },
     { rotulo: '(−) CMV', valor: -resumo.cmv },
     { rotulo: 'Lucro bruto', valor: Math.round(lucroBruto), destaque: true },
     { rotulo: '(−) Mão de obra (açougue/caixa)', valor: -Math.round(resumo.despesas * 0.52) },
@@ -87,7 +90,11 @@ export function montarDre(resumo: ResumoFinanceiro, visao: Visao): LinhaDre[] {
     { rotulo: '(−) Embalagens e insumos', valor: -Math.round(resumo.despesas * 0.21) },
     { rotulo: '(−) Outras despesas', valor: -Math.round(resumo.despesas * 0.18) },
     { rotulo: '(−) Perdas e desperdícios', valor: -resumo.desperdicio },
-    { rotulo: 'Lucro líquido gerencial', valor: Math.round(lucroBruto - resumo.despesas - resumo.desperdicio), destaque: true },
+    {
+      rotulo: 'Lucro líquido gerencial',
+      valor: Math.round(lucroBruto - resumo.despesas - resumo.desperdicio),
+      destaque: true,
+    },
   ]
 }
 

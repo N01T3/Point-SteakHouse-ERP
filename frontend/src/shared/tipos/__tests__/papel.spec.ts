@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  ROTA_INICIAL_POR_PAPEL,
-  filtrarMenuPorPapel,
-  podeAcessarRota,
-} from '../papel'
+import { filtrarMenuPorPapel, podeAcessarRota, ROTA_INICIAL_POR_PAPEL } from '../papel'
 
 describe('navegação por cargo', () => {
   it('caixa enxerga apenas a operação do mercado', () => {

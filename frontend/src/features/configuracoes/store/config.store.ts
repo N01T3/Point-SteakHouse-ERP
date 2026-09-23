@@ -46,7 +46,10 @@ export const useConfigStore = defineStore('config', () => {
       erro.value = 'Operador é obrigatório.'
       throw new Error(erro.value)
     }
-    if (parcial.margemAlvoCarnes !== undefined && (parcial.margemAlvoCarnes < 0 || parcial.margemAlvoCarnes > 90)) {
+    if (
+      parcial.margemAlvoCarnes !== undefined &&
+      (parcial.margemAlvoCarnes < 0 || parcial.margemAlvoCarnes > 90)
+    ) {
       throw new Error('Margem alvo deve estar entre 0 e 90%.')
     }
     if (parcial.ufFiscal !== undefined && parcial.ufFiscal.trim().length !== 2) {

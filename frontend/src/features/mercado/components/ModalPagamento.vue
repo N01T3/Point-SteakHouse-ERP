@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useDisplay } from 'vuetify'
 import { useFormatador } from '../../../shared/composables/useFormatador'
 import { calcularTroco, fiadoDisponivel } from '../logica/mercado'
 import { useMercadoStore } from '../store/mercado.store'
@@ -13,6 +14,7 @@ const emit = defineEmits<{
 
 const store = useMercadoStore()
 const { formatarMoeda } = useFormatador()
+const { mobile } = useDisplay()
 
 const modo = ref<'avista' | 'dividido'>('avista')
 const forma = ref<FormaPagamento>('DINHEIRO')
@@ -33,18 +35,31 @@ const ROTULO_FORMA: Record<FormaPagamento, string> = {
   FIADO: 'Fiado',
 }
 
+const FORMAS: FormaPagamento[] = ['DINHEIRO', 'CARTAO', 'PIX', 'FIADO']
+
+const ICONE_FORMA: Record<FormaPagamento, string> = {
+  DINHEIRO: 'mdi-cash',
+  CARTAO: 'mdi-credit-card',
+  PIX: 'mdi-lightning-bolt',
+  FIADO: 'mdi-account-clock',
+}
+
 const troco = computed(() =>
   forma.value === 'DINHEIRO' && recebido.value !== null ? calcularTroco(props.total, recebido.value) : null,
 )
 const cliente = computed(() => store.clientes.find((c) => c.id === clienteId.value) ?? null)
 
-const somaParcelas = computed(() =>
-  Math.round(parcelas.value.reduce((soma, p) => soma + (p.valor ?? 0), 0) * 100) / 100,
+const somaParcelas = computed(
+  () => Math.round(parcelas.value.reduce((soma, p) => soma + (p.valor ?? 0), 0) * 100) / 100,
 )
 const restante = computed(() => Math.round((props.total - somaParcelas.value) * 100) / 100)
 const temDinheiroDividido = computed(() => parcelas.value.some((p) => p.forma === 'DINHEIRO'))
-const valorDinheiroDividido = computed(() =>
-  Math.round(parcelas.value.filter((p) => p.forma === 'DINHEIRO').reduce((soma, p) => soma + (p.valor ?? 0), 0) * 100) / 100,
+const valorDinheiroDividido = computed(
+  () =>
+    Math.round(
+      parcelas.value.filter((p) => p.forma === 'DINHEIRO').reduce((soma, p) => soma + (p.valor ?? 0), 0) *
+        100,
+    ) / 100,
 )
 const trocoDividido = computed(() =>
   recebidoDividido.value !== null ? calcularTroco(valorDinheiroDividido.value, recebidoDividido.value) : null,
@@ -117,287 +132,121 @@ function confirmar(): void {
 </script>
 
 <template>
-  <div class="fundo" @click.self="emit('fechar')">
-    <div class="modal" role="dialog" aria-label="Pagamento">
-      <div class="titulo">Pagamento · {{ formatarMoeda(total) }}</div>
-
-      <div class="segmentado">
-        <button type="button" :class="{ ativo: modo === 'avista' }" @click="modo = 'avista'">À vista</button>
-        <button type="button" :class="{ ativo: modo === 'dividido' }" @click="modo = 'dividido'">Dividido</button>
-      </div>
-
-      <template v-if="modo === 'avista'">
-      <div class="formas">
-        <button
-          v-for="opcao in (['DINHEIRO', 'CARTAO', 'PIX', 'FIADO'] as FormaPagamento[])"
-          :key="opcao"
-          type="button"
-          class="forma"
-          :class="{ ativa: forma === opcao }"
-          @click="forma = opcao"
-        >
-          {{ ROTULO_FORMA[opcao] }}
-        </button>
-      </div>
-
-      <label v-if="forma === 'DINHEIRO'" class="campo">
-        <span>Valor recebido</span>
-        <input v-model.number="recebido" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" />
-      </label>
-      <div v-if="forma === 'DINHEIRO' && troco !== null" class="troco">Troco: {{ formatarMoeda(troco) }}</div>
-
-      <label v-if="forma === 'FIADO'" class="campo">
-        <span>Cliente</span>
-        <select v-model="clienteId">
-          <option value="" disabled>Selecionar cliente…</option>
-          <option v-for="c in store.clientes" :key="c.id" :value="c.id">
-            {{ c.nome }} — disponível {{ formatarMoeda(fiadoDisponivel(c)) }}
-          </option>
-        </select>
-      </label>
-      </template>
-
-      <template v-else>
-        <div v-for="(parcela, indice) in parcelas" :key="indice" class="parcela">
-          <select v-model="parcela.forma" aria-label="Forma da parcela">
-            <option v-for="(rotulo, valor) in ROTULO_FORMA" :key="valor" :value="valor">{{ rotulo }}</option>
-          </select>
-          <input v-model.number="parcela.valor" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" />
-          <button
-            v-if="parcelas.length > 2"
-            type="button"
-            class="link"
-            @click="removerParcela(indice)"
+  <v-dialog
+    :model-value="true"
+    max-width="480"
+    :fullscreen="mobile"
+    :transition="mobile ? 'dialog-bottom-transition' : 'dialog-transition'"
+    @update:model-value="(v) => !v && emit('fechar')"
+  >
+    <v-card rounded="xl">
+      <v-card-title>Pagamento - {{ formatarMoeda(total) }}</v-card-title>
+      <v-card-text class="d-flex flex-column ga-3">
+        <v-btn-toggle v-model="modo" color="primary" density="comfortable" rounded="xl" border mandatory>
+          <v-btn value="avista">A vista</v-btn>
+          <v-btn value="dividido">Dividido</v-btn>
+        </v-btn-toggle>
+        <template v-if="modo === 'avista'">
+          <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Forma de pagamento">
+            <v-card
+              v-for="opcao in FORMAS"
+              :key="opcao"
+              :variant="forma === opcao ? 'tonal' : 'outlined'"
+              :color="forma === opcao ? 'primary' : undefined"
+              rounded="lg"
+              hover
+              @click="forma = opcao"
+            >
+              <v-card-text class="d-flex align-center ga-2 py-3">
+                <v-icon :icon="ICONE_FORMA[opcao]" />
+                <span class="font-weight-medium">{{ ROTULO_FORMA[opcao] }}</span>
+                <v-spacer />
+                <v-icon v-if="forma === opcao" icon="mdi-check-circle" color="primary" />
+              </v-card-text>
+            </v-card>
+          </div>
+          <v-text-field
+            v-if="forma === 'DINHEIRO'"
+            v-model.number="recebido"
+            type="number"
+            label="Valor recebido"
+            prefix="R$"
+          />
+          <v-alert v-if="forma === 'DINHEIRO' && troco !== null" type="info" variant="tonal" density="compact"
+            >Troco: {{ formatarMoeda(troco) }}</v-alert
           >
-            ×
-          </button>
-        </div>
-        <button type="button" class="link" @click="adicionarParcela">+ adicionar forma</button>
-        <div class="restante" :class="{ ok: restante === 0 }">Restante: {{ formatarMoeda(restante) }}</div>
-
-        <label v-if="temDinheiroDividido" class="campo">
-          <span>Recebido em dinheiro</span>
-          <input v-model.number="recebidoDividido" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" />
-        </label>
-        <div v-if="temDinheiroDividido && trocoDividido !== null" class="troco">Troco: {{ formatarMoeda(trocoDividido) }}</div>
-
-        <label v-if="temFiadoDividido" class="campo">
-          <span>Cliente do fiado</span>
-          <select v-model="clienteId">
-            <option value="" disabled>Selecionar cliente…</option>
-            <option v-for="c in store.clientes" :key="c.id" :value="c.id">
-              {{ c.nome }} — disponível {{ formatarMoeda(fiadoDisponivel(c)) }}
-            </option>
-          </select>
-        </label>
-      </template>
-
-      <div v-if="erro" class="erro" role="alert">{{ erro }}</div>
-
-      <div class="acoes">
-        <button type="button" class="botao-secundario" @click="emit('fechar')">Voltar</button>
-        <button type="button" class="botao-primario" @click="confirmar">Confirmar venda</button>
-      </div>
-    </div>
-  </div>
+          <v-select
+            v-if="forma === 'FIADO'"
+            v-model="clienteId"
+            label="Cliente"
+            :items="
+              store.clientes.map((c) => ({
+                title: c.nome + ' - disponivel ' + formatarMoeda(fiadoDisponivel(c)),
+                value: c.id,
+              }))
+            "
+          />
+        </template>
+        <template v-else>
+          <v-card
+            v-for="(parcela, indice) in parcelas"
+            :key="indice"
+            variant="outlined"
+            rounded="lg"
+          >
+            <v-card-text class="d-flex ga-2 align-center">
+              <v-select
+                v-model="parcela.forma"
+                label="Forma"
+                :items="Object.entries(ROTULO_FORMA).map(([value, title]) => ({ title, value }))"
+                density="compact"
+                hide-details
+                style="max-width: 150px"
+              />
+              <v-text-field
+                v-model.number="parcela.valor"
+                type="number"
+                label="Valor"
+                prefix="R$"
+                density="compact"
+                hide-details
+              />
+              <v-btn
+                v-if="parcelas.length > 2"
+                icon="mdi-close"
+                size="small"
+                variant="text"
+                @click="removerParcela(indice)"
+              />
+            </v-card-text>
+          </v-card>
+          <v-btn variant="text" prepend-icon="mdi-plus" @click="adicionarParcela">Adicionar forma</v-btn>
+          <v-alert :type="restante === 0 ? 'success' : 'warning'" variant="tonal" density="compact"
+            >Restante: {{ formatarMoeda(restante) }}</v-alert
+          >
+          <v-text-field
+            v-if="temDinheiroDividido"
+            v-model.number="recebidoDividido"
+            type="number"
+            label="Recebido em dinheiro"
+            prefix="R$"
+          />
+          <v-select
+            v-if="temFiadoDividido"
+            v-model="clienteId"
+            label="Cliente do fiado"
+            :items="store.clientes.map((c) => ({ title: c.nome, value: c.id }))"
+          />
+        </template>
+        <v-alert v-if="erro" type="error" variant="tonal" density="compact">{{ erro }}</v-alert>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn variant="outlined" rounded="xl" @click="emit('fechar')">Voltar</v-btn>
+        <v-btn color="primary" variant="flat" rounded="xl" prepend-icon="mdi-check" @click="confirmar"
+          >Confirmar venda</v-btn
+        >
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
-
-<style scoped>
-.fundo {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  z-index: 50;
-}
-
-@media (min-width: 640px) {
-  .fundo {
-    align-items: center;
-    padding: 24px;
-  }
-}
-
-.modal {
-  width: min(440px, 100%);
-  max-height: 92vh;
-  overflow-y: auto;
-  background: var(--cor-surface);
-  border-radius: 20px 20px 0 0;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-@media (min-width: 640px) {
-  .modal {
-    border-radius: 20px;
-  }
-}
-
-.titulo {
-  font-family: 'Bodoni Moda', serif;
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--cor-on-surface);
-}
-
-.formas {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.forma {
-  padding: 14px;
-  border-radius: 12px;
-  border: 1px solid var(--cor-outline);
-  background: var(--cor-bg);
-  color: var(--cor-on-surface);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.forma.ativa {
-  border-color: var(--cor-primary);
-  background: var(--cor-primary-container);
-  color: var(--cor-on-primary-container);
-}
-
-.segmentado {
-  display: flex;
-  border: 1px solid var(--cor-outline);
-  border-radius: 100px;
-  overflow: hidden;
-}
-
-.segmentado button {
-  flex: 1;
-  border: none;
-  background: transparent;
-  padding: 10px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--cor-on-surface-variant);
-  cursor: pointer;
-}
-
-.segmentado button.ativo {
-  background: var(--cor-primary-container);
-  color: var(--cor-on-primary-container);
-}
-
-.parcela {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.parcela select,
-.parcela input {
-  padding: 11px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--cor-outline);
-  background: var(--cor-bg);
-  color: var(--cor-on-surface);
-  font-family: inherit;
-  font-size: 14px;
-}
-
-.parcela select {
-  flex: 1;
-  min-width: 0;
-}
-
-.parcela input {
-  width: 110px;
-}
-
-.link {
-  background: none;
-  border: none;
-  padding: 4px 8px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--cor-primary);
-  cursor: pointer;
-  align-self: flex-start;
-}
-
-.restante {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--cor-error);
-}
-
-.restante.ok {
-  color: var(--cor-success);
-}
-
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 12.5px;
-  color: var(--cor-on-surface-variant);
-}
-
-.campo input,
-.campo select {
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid var(--cor-outline);
-  background: var(--cor-bg);
-  color: var(--cor-on-surface);
-  font-family: inherit;
-  font-size: 15px;
-}
-
-.troco {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--cor-success);
-}
-
-.erro {
-  font-size: 13px;
-  color: var(--cor-error);
-}
-
-.acoes {
-  display: flex;
-  gap: 8px;
-}
-
-.botao-primario {
-  flex: 1;
-  padding: 13px;
-  border: none;
-  border-radius: 100px;
-  background: var(--cor-primary);
-  color: var(--cor-on-primary);
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.botao-secundario {
-  padding: 13px 18px;
-  border-radius: 100px;
-  border: 1px solid var(--cor-outline);
-  background: var(--cor-surface);
-  color: var(--cor-on-surface);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-</style>

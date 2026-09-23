@@ -1,8 +1,8 @@
 <script setup lang="ts">
-const props = withDefaults(
-  defineProps<{ percentual: number; cor?: string; altura?: string }>(),
-  { cor: 'var(--cor-primary)', altura: '8px' },
-)
+const props = withDefaults(defineProps<{ percentual: number; cor?: string; altura?: string }>(), {
+  cor: 'var(--cor-primary)',
+  altura: '8px',
+})
 
 const percentualSeguro = Math.min(100, Math.max(0, props.percentual))
 </script>

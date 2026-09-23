@@ -1,7 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { useFinanceiroStore } from '../financeiro.store'
 import { useMercadoStore } from '../../../mercado/store/mercado.store'
+import { useFinanceiroStore } from '../financeiro.store'
 
 beforeEach(() => {
   setActivePinia(createPinia())

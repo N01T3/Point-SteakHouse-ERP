@@ -28,23 +28,23 @@ describe('cadastrarProduto', () => {
 
   it('rejeita EAN com dígito inválido', () => {
     const store = useMercadoStore()
-    expect(() => store.cadastrarProduto({ ...BASE, nome: 'Teste A', codigoBarras: '7891234000011' }, 'dono')).toThrow(
-      /inválido|confere/i,
-    )
+    expect(() =>
+      store.cadastrarProduto({ ...BASE, nome: 'Teste A', codigoBarras: '7891234000011' }, 'dono'),
+    ).toThrow(/inválido|confere/i)
   })
 
   it('rejeita código duplicado', () => {
     const store = useMercadoStore()
-    expect(() => store.cadastrarProduto({ ...BASE, nome: 'Teste B', codigoBarras: '7891234000019' }, 'dono')).toThrow(
-      /já está cadastrado/i,
-    )
+    expect(() =>
+      store.cadastrarProduto({ ...BASE, nome: 'Teste B', codigoBarras: '7891234000019' }, 'dono'),
+    ).toThrow(/já está cadastrado/i)
   })
 
   it('rejeita etiqueta de balança (prefixo 2) no cadastro', () => {
     const store = useMercadoStore()
-    expect(() => store.cadastrarProduto({ ...BASE, nome: 'Teste C', codigoBarras: '2000101004509' }, 'dono')).toThrow(
-      /PLU/i,
-    )
+    expect(() =>
+      store.cadastrarProduto({ ...BASE, nome: 'Teste C', codigoBarras: '2000101004509' }, 'dono'),
+    ).toThrow(/PLU/i)
   })
 
   it('cadastra só com PLU e rejeita PLU duplicado', () => {
@@ -78,7 +78,16 @@ describe('banco local do catálogo', () => {
     const json = store.exportarCatalogo()
     expect(JSON.parse(json).produtos.length).toBeGreaterThan(0)
     store.cadastrarProduto(
-      { nome: 'Produto Local', categoria: 'Geral', unidade: 'UN', preco: 5, custoMedio: 3, plu: '998', estoqueMinimo: 0, estoqueAlvo: 0 },
+      {
+        nome: 'Produto Local',
+        categoria: 'Geral',
+        unidade: 'UN',
+        preco: 5,
+        custoMedio: 3,
+        plu: '998',
+        estoqueMinimo: 0,
+        estoqueAlvo: 0,
+      },
       'dono',
     )
     const total = store.importarCatalogo(json, 'dono')

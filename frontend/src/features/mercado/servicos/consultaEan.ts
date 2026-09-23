@@ -19,7 +19,8 @@ function sugerirCategoria(categorias: string): string {
   if (/beer|beverage|drink|juice|soda|water|wine|cacha/.test(texto)) return 'Bebidas'
   if (/meat|beef|pork|poultry|sausage|ham|bacon/.test(texto)) return 'Carnes'
   if (/cheese|dairy|yogurt|milk/.test(texto)) return 'Frios'
-  if (/charcoal|cleaning|detergent|soap/.test(texto)) return texto.includes('charcoal') ? 'Churrasco' : 'Limpeza'
+  if (/charcoal|cleaning|detergent|soap/.test(texto))
+    return texto.includes('charcoal') ? 'Churrasco' : 'Limpeza'
   return 'Mercearia'
 }
 

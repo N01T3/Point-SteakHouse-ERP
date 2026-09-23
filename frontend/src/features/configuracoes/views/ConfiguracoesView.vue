@@ -7,8 +7,8 @@ import { useAutenticacao } from '../../auth/composables/useAutenticacao'
 import { useDesossaStore } from '../../desossa-subprodutos/store/desossa.store'
 import { useMaturacaoStore } from '../../maturacao/store/maturacao.store'
 import { useParametrosSegurancaBiologicaStore } from '../../seguranca-biologica/store/parametros.store'
-import { useConfigStore } from '../store/config.store'
 import { USUARIOS_MOCK } from '../mocks/usuarios.mock'
+import { useConfigStore } from '../store/config.store'
 
 const { usuario, autenticado, entrar, sair } = useAutenticacao()
 const { modoEscuro, alternar } = useTema()
@@ -119,7 +119,11 @@ async function aoEnviarLogin(): Promise<void> {
         <div class="secao-titulo">Templates de desossa</div>
         <div v-for="template in desossaStore.templates" :key="template.id" class="linha-template">
           <strong>{{ template.tipoDePeca }}</strong>
-          <span>{{ template.cortesEsperados.map((c) => `${c.nome} (${(c.percentualEsperado * 100).toFixed(0)}%)`).join(', ') }}</span>
+          <span>{{
+            template.cortesEsperados
+              .map((c) => `${c.nome} (${(c.percentualEsperado * 100).toFixed(0)}%)`)
+              .join(', ')
+          }}</span>
         </div>
       </div>
 
@@ -188,7 +192,10 @@ async function aoEnviarLogin(): Promise<void> {
         <div v-if="erroCfg" class="erro">{{ erroCfg }}</div>
         <div v-if="okCfg" class="sucesso" role="status">{{ okCfg }}</div>
         <button class="botao-primario" type="button" @click="salvarCfg">Salvar configurações</button>
-        <div class="nota">Regras fiscais ficam em configuração, nunca fixas no frontend. Segredos (certificado, CSC) não aparecem aqui.</div>
+        <div class="nota">
+          Regras fiscais ficam em configuração, nunca fixas no frontend. Segredos (certificado, CSC) não
+          aparecem aqui.
+        </div>
       </div>
 
       <div class="secao">
@@ -217,7 +224,7 @@ async function aoEnviarLogin(): Promise<void> {
 }
 
 .titulo {
-  font-family: 'Bodoni Moda', serif;
+  font-family: var(--fonte-display);
   font-size: 30px;
   font-weight: 600;
   color: var(--cor-on-bg);

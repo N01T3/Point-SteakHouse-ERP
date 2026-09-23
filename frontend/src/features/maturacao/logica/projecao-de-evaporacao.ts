@@ -11,7 +11,9 @@ function taxaDiariaEsperada(peca: Pick<PecaEmMaturacao, 'tecnica'>): number {
   return peca.tecnica === 'dry_aged' ? TAXA_DIARIA_DRY_AGED : TAXA_DIARIA_WET_AGED
 }
 
-export function pesoProjetadoKg(peca: Pick<PecaEmMaturacao, 'tecnica' | 'pesoInicialKg' | 'diasAtual'>): number {
+export function pesoProjetadoKg(
+  peca: Pick<PecaEmMaturacao, 'tecnica' | 'pesoInicialKg' | 'diasAtual'>,
+): number {
   const perdaProjetada = taxaDiariaEsperada(peca) * peca.diasAtual
   return peca.pesoInicialKg * (1 - Math.min(1, perdaProjetada))
 }
@@ -29,7 +31,9 @@ export function desvioSignificativo(
   return desvioPercentual > LIMIAR_DE_DESVIO_SIGNIFICATIVO
 }
 
-export function custoAtualPorKg(peca: Pick<PecaEmMaturacao, 'pesoInicialKg' | 'pesoAtualKg' | 'custoInicialPorKg'>): number {
+export function custoAtualPorKg(
+  peca: Pick<PecaEmMaturacao, 'pesoInicialKg' | 'pesoAtualKg' | 'custoInicialPorKg'>,
+): number {
   // O custo total da peça não muda com a evaporação, mas o peso vendável sim —
   // então o custo por kg sobe conforme a peça perde água.
   if (peca.pesoAtualKg <= 0) return peca.custoInicialPorKg

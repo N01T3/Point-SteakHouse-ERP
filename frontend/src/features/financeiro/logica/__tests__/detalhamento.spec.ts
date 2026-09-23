@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { DIAS_MOCK } from '../../mock/financeiro.mock'
-import { agregar } from '../financeiro'
 import {
   compararComAnterior,
   despesasPorCategoria,
@@ -11,6 +10,7 @@ import {
   serieResultado,
   waterfallDre,
 } from '../detalhamento'
+import { agregar } from '../financeiro'
 
 describe('detalhamento financeiro', () => {
   it('monta série receita/cmv/lucro e agrega semanas em 90d', () => {
@@ -41,7 +41,16 @@ describe('detalhamento financeiro', () => {
       { categoria: 'B', descricao: 'b', valor: 50 },
     ]
     const fatias = despesasPorCategoria(base, [
-      { id: '1', descricao: 'Aluguel', categoria: 'Aluguel', centroCusto: 'Adm', valorMensal: 50, ativo: true, criadoEm: '', criadoPor: '' },
+      {
+        id: '1',
+        descricao: 'Aluguel',
+        categoria: 'Aluguel',
+        centroCusto: 'Adm',
+        valorMensal: 50,
+        ativo: true,
+        criadoEm: '',
+        criadoPor: '',
+      },
     ])
     const soma = fatias.reduce((s, f) => s + f.percentual, 0)
     expect(soma).toBeGreaterThanOrEqual(99)
@@ -51,8 +60,28 @@ describe('detalhamento financeiro', () => {
 
   it('estoque valorizado ordena por valor e soma total', () => {
     const { itens, total } = estoqueValorizado([
-      { id: 'a', nome: 'A', categoria: 'C', unidade: 'KG', preco: 10, custoMedio: 5, estoqueMinimo: 1, estoqueAlvo: 2, lotes: [{ lote: 'L1', validade: '2027-01-01', quantidade: 2, estado: 'LIBERADO' }] },
-      { id: 'b', nome: 'B', categoria: 'C', unidade: 'UN', preco: 10, custoMedio: 3, estoqueMinimo: 1, estoqueAlvo: 2, lotes: [] },
+      {
+        id: 'a',
+        nome: 'A',
+        categoria: 'C',
+        unidade: 'KG',
+        preco: 10,
+        custoMedio: 5,
+        estoqueMinimo: 1,
+        estoqueAlvo: 2,
+        lotes: [{ lote: 'L1', validade: '2027-01-01', quantidade: 2, estado: 'LIBERADO' }],
+      },
+      {
+        id: 'b',
+        nome: 'B',
+        categoria: 'C',
+        unidade: 'UN',
+        preco: 10,
+        custoMedio: 3,
+        estoqueMinimo: 1,
+        estoqueAlvo: 2,
+        lotes: [],
+      },
     ])
     expect(itens.length).toBe(1)
     expect(total).toBe(10)
@@ -60,7 +89,15 @@ describe('detalhamento financeiro', () => {
 
   it('rendimento agrega ordens e compara com período anterior', () => {
     const r = resumirRendimento([
-      { pecaBruta: { pesoKg: 100 }, saidas: [{ pesoKg: 60, classificacao: 'CORTE' }, { pesoKg: 20, classificacao: 'OSSO' }], rendimentoRealizado: 0.6, custoEfetivoPorKg: 30 },
+      {
+        pecaBruta: { pesoKg: 100 },
+        saidas: [
+          { pesoKg: 60, classificacao: 'CORTE' },
+          { pesoKg: 20, classificacao: 'OSSO' },
+        ],
+        rendimentoRealizado: 0.6,
+        custoEfetivoPorKg: 30,
+      },
     ])
     expect(r.rendimento).toBe(0.6)
     expect(r.custoEfetivoMedio).toBe(30)

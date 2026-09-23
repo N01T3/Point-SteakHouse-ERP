@@ -16,7 +16,12 @@ function moeda(valor: number): string {
 }
 
 function dataHora(iso: string): string {
-  return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 function linhasPagamento(venda: Venda): string[] {
@@ -64,5 +69,8 @@ export function gerarHtmlCupom(venda: Venda, loja = 'Point Steak House'): string
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/\n/g, '<br>')
-  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Cupom #${venda.numero}</title><style>body{font-family:monospace;font-size:14px;max-width:300px;margin:16px auto}</style></head><body>${texto}<script>window.onload=()=>window.print()<\/script></body></html>`
+  return (
+    `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Cupom #${venda.numero}</title><style>body{font-family:monospace;font-size:14px;max-width:300px;margin:16px auto}</style></head><body>${texto}<script>window.onload=()=>window.print();window.onafterprint=()=>window.close()</` +
+    `script></body></html>`
+  )
 }

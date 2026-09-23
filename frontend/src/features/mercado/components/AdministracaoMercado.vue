@@ -102,7 +102,12 @@ function confirmarPerda(): void {
       erro.value = 'Informe produto e quantidade.'
       return
     }
-    const perda = store.registrarPerda(perdaProdutoId.value, perdaQtd.value, perdaMotivo.value, auth.usuario?.nome ?? 'admin')
+    const perda = store.registrarPerda(
+      perdaProdutoId.value,
+      perdaQtd.value,
+      perdaMotivo.value,
+      auth.usuario?.nome ?? 'admin',
+    )
     sucesso.value = `Perda de ${formatarMoeda(perda.valor)} registrada (baixa no lote ${perda.lote}). Alimenta o Financeiro.`
     perdaQtd.value = null
   } catch (e) {
@@ -118,7 +123,12 @@ function criarPromocao(): void {
       erro.value = 'Informe descrição e percentual.'
       return
     }
-    store.criarPromocao({ descricao: promoDesc.value.trim(), tipo: 'quantidade', percentual: promoPerc.value, ativa: true })
+    store.criarPromocao({
+      descricao: promoDesc.value.trim(),
+      tipo: 'quantidade',
+      percentual: promoPerc.value,
+      ativa: true,
+    })
     sucesso.value = 'Promoção criada e ativa no caixa.'
     promoDesc.value = ''
     promoPerc.value = null
@@ -129,185 +139,177 @@ function criarPromocao(): void {
 </script>
 
 <template>
-  <div class="admin">
-    <div v-if="erro" class="erro" role="alert">{{ erro }}</div>
-    <div v-if="sucesso" class="sucesso" role="status">{{ sucesso }}</div>
-
-    <div class="subabas">
-      <button type="button" :class="{ ativa: subAba === 'produtos' }" @click="subAba = 'produtos'">Produtos e preços</button>
-      <button type="button" :class="{ ativa: subAba === 'recebimento' }" @click="subAba = 'recebimento'">Recebimento</button>
-      <button type="button" :class="{ ativa: subAba === 'estoque' }" @click="subAba = 'estoque'">Estoque e lotes</button>
-      <button type="button" :class="{ ativa: subAba === 'promocoes' }" @click="subAba = 'promocoes'">Promoções</button>
-      <button type="button" :class="{ ativa: subAba === 'perdas' }" @click="subAba = 'perdas'">Perdas{{ store.perdas.length ? ` (${store.perdas.length})` : '' }}</button>
-      <button type="button" :class="{ ativa: subAba === 'fiscal' }" @click="subAba = 'fiscal'">Fiscal e auditoria</button>
-    </div>
-
-    <!-- PRODUTOS -->
-    <div v-if="subAba === 'produtos'" class="cartao">
-      <div class="secao-titulo">Produtos e preços — custo visível só aqui, nunca no caixa</div>
-      <div v-for="p in store.produtos" :key="p.id" class="linha-prod">
-        <div class="prod-info">
-          <strong>{{ p.nome }}</strong>
-          <span>{{ p.categoria }} · {{ p.fornecedor }} · custo {{ formatarMoeda(p.custoMedio) }} · {{ p.ativo ? 'ativo' : 'inativo' }}</span>
-        </div>
-        <div class="prod-preco">
-          <input v-model.number="precoEdicao[p.id]" type="number" min="0" step="0.01" :placeholder="String(p.preco)" :disabled="!podeAlterarPreco" />
-          <button type="button" class="botao-secundario" :disabled="!podeAlterarPreco" @click="salvarPreco(p.id)">Salvar</button>
-        </div>
-      </div>
-      <div v-if="!podeAlterarPreco" class="nota">Alteração de preço exige mercado.alterar_preco.</div>
-    </div>
-
-    <!-- RECEBIMENTO -->
-    <div v-if="subAba === 'recebimento'" class="cartao">
-      <div class="secao-titulo">Recebimento — conferência com quarentena automática em divergência</div>
-      <div class="grade">
-        <label class="campo">Produto
-          <select v-model="recProdutoId">
-            <option value="" disabled>Selecionar…</option>
-            <option v-for="p in store.produtos" :key="p.id" :value="p.id">{{ p.nome }}</option>
-          </select>
-        </label>
-        <label class="campo">Fornecedor<input v-model="recFornecedor" type="text" placeholder="Frigorífico…" /></label>
-        <label class="campo">Qtd<input v-model.number="recQtd" type="number" min="0" step="0.001" /></label>
-        <label class="campo">Custo unit. (R$)<input v-model.number="recCusto" type="number" min="0" step="0.01" /></label>
-        <label class="campo">Lote<input v-model="recLote" type="text" placeholder="L…" /></label>
-        <label class="campo">Validade<input v-model="recValidade" type="date" /></label>
-        <label class="campo">Temp. recebimento (°C)<input v-model.number="recTemp" type="number" step="0.5" /></label>
-        <label class="campo">Divergência/avaria<input v-model="recDivergencia" type="text" placeholder="vazio = liberado" /></label>
-        <label class="campo">Pedido
-          <select v-model="recPedidoId">
-            <option value="">Avulso</option>
-            <option v-for="ped in store.pedidos.filter((p) => p.status === 'aberto' || p.status === 'recebido-parcial')" :key="ped.id" :value="ped.id">#{{ ped.numero }} · {{ ped.fornecedor }}</option>
-          </select>
-        </label>
-      </div>
-      <button type="button" class="botao-primario" @click="confirmarRecebimento">Confirmar recebimento</button>
-      <div v-for="r in store.recebimentos" :key="r.id" class="linha-simples">
-        <span>{{ r.produto }} · lote {{ r.lote }} · {{ r.quantidade }} · {{ r.fornecedor }}{{ r.divergencia ? ` · quarentena: ${r.divergencia}` : '' }}</span>
-      </div>
-      <div v-if="store.recebimentos.length === 0" class="nota">Nenhum recebimento neste turno.</div>
-    </div>
-
-    <!-- ESTOQUE -->
-    <div v-if="subAba === 'estoque'" class="cartao">
-      <div class="secao-titulo">Estoque e lotes — livro de movimentos (FEFO na venda)</div>
-      <div class="nota">Lote em <strong>quarentena</strong> ou <strong>bloqueado</strong> não vende até liberação. Validade crítica aparece em vermelho.</div>
-      <div v-for="p in store.produtos" :key="p.id" class="bloco-lote">
-        <div class="bloco-lote-topo">
-          <strong>{{ p.nome }}</strong>
-          <span class="bloco-lote-meta">{{ p.grupo ?? p.categoria }}{{ p.subgrupo ? ` · ${p.subgrupo}` : '' }}</span>
-        </div>
-        <div v-if="p.lotes.length === 0" class="nota">Sem lotes.</div>
-        <div v-for="l in p.lotes" :key="`${l.lote}-${l.local ?? ''}`" class="linha-simples lote">
-          <span class="lote-codigo">{{ l.lote }}</span>
-          <span class="lote-detalhe">{{ l.quantidade }} · val. {{ l.validade }} · {{ l.local ?? 'Loja' }}</span>
-          <strong class="badge-mini" :class="l.estado.toLowerCase()">{{ l.estado.toLowerCase() }}</strong>
-        </div>
-      </div>
-      <div class="secao-titulo espacar">Reposição sugerida</div>
-      <div v-if="store.reposicoes.length === 0" class="nota">Estoque dentro do mínimo.</div>
-      <div v-for="rep in store.reposicoes" :key="rep.produtoId" class="linha-simples">
-        <span>{{ rep.produto }} · atual {{ rep.atual }}{{ rep.unidade }}</span>
-        <strong>pedir {{ rep.sugestao }}{{ rep.unidade }}</strong>
-      </div>
-    </div>
-
-    <!-- PROMOÇÕES -->
-    <div v-if="subAba === 'promocoes'" class="cartao">
-      <div class="secao-titulo">Promoções e markdown</div>
-      <div v-for="promo in store.promocoes" :key="promo.id" class="linha-simples">
-        <span>{{ promo.descricao }} · {{ promo.percentual }}% · {{ promo.ativa ? 'ativa' : 'pausada' }}</span>
-        <button type="button" class="link" @click="store.alternarPromocao(promo.id)">
-          {{ promo.ativa ? 'pausar' : 'ativar' }}
-        </button>
-      </div>
-      <div class="grade">
-        <label class="campo">Nova promoção<input v-model="promoDesc" type="text" placeholder="ex.: Fraldinha fds 10%" /></label>
-        <label class="campo">% off<input v-model.number="promoPerc" type="number" min="0" max="100" /></label>
-      </div>
-      <button type="button" class="botao-primario" @click="criarPromocao">Criar promoção</button>
-    </div>
-
-    <!-- PERDAS -->
-    <div v-if="subAba === 'perdas'" class="cartao">
-      <div class="secao-titulo">Perdas — baixa no estoque + valor para o Financeiro</div>
-      <div class="grade">
-        <label class="campo">Produto
-          <select v-model="perdaProdutoId">
-            <option value="" disabled>Selecionar…</option>
-            <option v-for="p in store.produtos" :key="p.id" :value="p.id">{{ p.nome }}</option>
-          </select>
-        </label>
-        <label class="campo">Qtd<input v-model.number="perdaQtd" type="number" min="0" step="0.001" /></label>
-        <label class="campo">Motivo
-          <select v-model="perdaMotivo">
-            <option v-for="(rotulo, valor) in ROTULO_MOTIVO" :key="valor" :value="valor">{{ rotulo }}</option>
-          </select>
-        </label>
-      </div>
-      <button type="button" class="botao-primario" @click="confirmarPerda">Registrar perda</button>
-      <div v-for="perda in store.perdas" :key="perda.id" class="linha-simples">
-        <span>{{ perda.produto }} · lote {{ perda.lote }} · {{ perda.quantidade }} · {{ ROTULO_MOTIVO[perda.motivo] }}</span>
-        <strong>{{ formatarMoeda(perda.valor) }}</strong>
-      </div>
-    </div>
-
-    <!-- FISCAL -->
-    <div v-if="subAba === 'fiscal'" class="cartao">
-      <div class="secao-titulo">Fiscal — central simulada (NFC-e 65 / NF-e 55 por UF)</div>
-      <div v-if="store.vendas.length === 0" class="nota">Sem documentos neste turno.</div>
-      <div v-for="v in store.vendas" :key="v.id" class="linha-simples">
-        <span>venda #{{ v.numero }} · {{ formatarMoeda(v.total) }} · {{ v.pagamento.forma }}</span>
-        <strong>{{ v.sincronizada ? (store.online ? 'autorizado' : 'contingência') : 'pendente de transmissão' }}</strong>
-      </div>
-      <div class="secao-titulo espacar">Livro de movimentos ({{ store.livro.length }})</div>
-      <div v-if="store.livro.length === 0" class="nota">Nenhum lançamento ainda — vendas, recebimentos e perdas aparecem aqui.</div>
-      <div v-for="m in store.livro.slice(0, 20)" :key="m.id" class="linha-simples">
-        <span>{{ m.tipo }} · {{ m.produto }} · lote {{ m.lote }} · {{ m.motivo }}</span>
-        <strong>{{ m.quantidade }}</strong>
-      </div>
-      <div class="secao-titulo espacar">Auditoria do turno</div>
-      <div class="nota">Movimentos: {{ store.movimentos.length }} · Devoluções: {{ store.devolucoes.length }} · Perdas: {{ store.perdas.length }} · Recebimentos: {{ store.recebimentos.length }}</div>
-      <div v-for="mov in store.movimentos" :key="mov.id" class="linha-simples"><span>{{ mov.tipo }} · {{ mov.motivo }}</span><strong>{{ formatarMoeda(mov.valor) }}</strong></div>
-      <div v-for="ev in store.eventos.slice(0, 20)" :key="ev.id" class="linha-simples"><span>{{ ev.tipo }} · {{ ev.descricao }} · {{ ev.operador }}{{ ev.online ? '' : ' · offline' }}</span></div>
-    </div>
+  <div class="d-flex flex-column ga-4">
+    <v-alert v-if="erro" type="error" variant="tonal" density="compact">{{ erro }}</v-alert>
+    <v-alert v-if="sucesso" type="success" variant="tonal" density="compact">{{ sucesso }}</v-alert>
+    <v-tabs v-model="subAba" color="primary" show-arrows>
+      <v-tab value="produtos">Produtos e precos</v-tab>
+      <v-tab value="recebimento">Recebimento</v-tab>
+      <v-tab value="estoque">Estoque e lotes</v-tab>
+      <v-tab value="promocoes">Promocoes</v-tab>
+      <v-tab value="perdas">Perdas{{ store.perdas.length ? ` (${store.perdas.length})` : '' }}</v-tab>
+      <v-tab value="fiscal">Fiscal e auditoria</v-tab>
+    </v-tabs>
+    <v-window v-model="subAba">
+      <v-window-item value="produtos">
+        <v-card rounded="xl">
+          <v-card-title>Produtos e precos - custo visivel so aqui</v-card-title>
+          <v-card-text>
+            <v-list>
+              <v-list-item v-for="p in store.produtos" :key="p.id">
+                <v-list-item-title>{{ p.nome }}</v-list-item-title>
+                <v-list-item-subtitle
+                  >{{ p.categoria }} - custo {{ formatarMoeda(p.custoMedio) }}</v-list-item-subtitle
+                >
+                <template #append>
+                  <div class="d-flex ga-2 align-center">
+                    <v-text-field
+                      v-model.number="precoEdicao[p.id]"
+                      type="number"
+                      :placeholder="String(p.preco)"
+                      prefix="R$"
+                      density="compact"
+                      hide-details
+                      style="max-width: 130px"
+                      :disabled="!podeAlterarPreco"
+                    />
+                    <v-btn
+                      size="small"
+                      variant="tonal"
+                      :disabled="!podeAlterarPreco"
+                      @click="salvarPreco(p.id)"
+                      >Salvar</v-btn
+                    >
+                  </div>
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+        </v-card>
+      </v-window-item>
+      <v-window-item value="recebimento">
+        <v-card rounded="xl">
+          <v-card-title>Recebimento - conferencia com quarentena automatica</v-card-title>
+          <v-card-text class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <v-select
+              v-model="recProdutoId"
+              label="Produto"
+              :items="store.produtos.map((p) => ({ title: p.nome, value: p.id }))"
+            />
+            <v-text-field v-model="recFornecedor" label="Fornecedor" />
+            <v-text-field v-model.number="recQtd" type="number" label="Qtd" />
+            <v-text-field v-model.number="recCusto" type="number" label="Custo unit. (R$)" prefix="R$" />
+            <v-text-field v-model="recLote" label="Lote" />
+            <v-text-field v-model="recValidade" type="date" label="Validade" />
+            <v-text-field
+              v-model="recDivergencia"
+              label="Divergencia/avaria"
+              placeholder="vazio = liberado"
+            />
+          </v-card-text>
+          <v-card-actions
+            ><v-spacer /><v-btn color="primary" variant="flat" rounded="xl" @click="confirmarRecebimento"
+              >Confirmar recebimento</v-btn
+            ></v-card-actions
+          >
+        </v-card>
+      </v-window-item>
+      <v-window-item value="estoque">
+        <v-card rounded="xl">
+          <v-card-title>Estoque e lotes - FEFO na venda</v-card-title>
+          <v-card-text>
+            <div v-for="p in store.produtos" :key="p.id" class="mb-3">
+              <div class="font-weight-bold">{{ p.nome }}</div>
+              <v-chip
+                v-for="l in p.lotes"
+                :key="l.lote"
+                class="ma-1"
+                size="small"
+                :color="l.estado === 'LIBERADO' ? 'success' : l.estado === 'QUARENTENA' ? 'warning' : 'error'"
+                variant="tonal"
+                >{{ l.lote }} - val. {{ l.validade }} - {{ l.quantidade }}</v-chip
+              >
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-window-item>
+      <v-window-item value="promocoes">
+        <v-card rounded="xl">
+          <v-card-title>Promocoes e markdown</v-card-title>
+          <v-card-text>
+            <v-list>
+              <v-list-item v-for="promo in store.promocoes" :key="promo.id">
+                <v-list-item-title>{{ promo.descricao }} - {{ promo.percentual }}%</v-list-item-title>
+                <template #append
+                  ><v-btn size="small" variant="text" @click="store.alternarPromocao(promo.id)">{{
+                    promo.ativa ? 'pausar' : 'ativar'
+                  }}</v-btn></template
+                >
+              </v-list-item>
+            </v-list>
+            <div class="d-flex ga-2 mt-3">
+              <v-text-field v-model="promoDesc" label="Nova promocao" hide-details />
+              <v-text-field
+                v-model.number="promoPerc"
+                type="number"
+                label="% off"
+                hide-details
+                style="max-width: 120px"
+              />
+              <v-btn color="primary" variant="flat" rounded="xl" @click="criarPromocao">Criar</v-btn>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-window-item>
+      <v-window-item value="perdas">
+        <v-card rounded="xl">
+          <v-card-title>Perdas</v-card-title>
+          <v-card-text class="d-flex flex-wrap ga-2">
+            <v-select
+              v-model="perdaProdutoId"
+              label="Produto"
+              :items="store.produtos.map((p) => ({ title: p.nome, value: p.id }))"
+              style="min-width: 200px"
+            />
+            <v-text-field v-model.number="perdaQtd" type="number" label="Qtd" style="max-width: 120px" />
+            <v-select
+              v-model="perdaMotivo"
+              label="Motivo"
+              :items="Object.entries(ROTULO_MOTIVO).map(([value, title]) => ({ title, value }))"
+              style="min-width: 180px"
+            />
+            <v-btn color="primary" variant="flat" rounded="xl" @click="confirmarPerda">Registrar perda</v-btn>
+          </v-card-text>
+          <v-card-text>
+            <v-list density="compact">
+              <v-list-item v-for="perda in store.perdas" :key="perda.id"
+                ><v-list-item-title
+                  >{{ perda.produto }} - lote {{ perda.lote }} - {{ perda.quantidade }}</v-list-item-title
+                ><template #append
+                  ><strong>{{ formatarMoeda(perda.valor) }}</strong></template
+                ></v-list-item
+              >
+            </v-list>
+          </v-card-text>
+        </v-card>
+      </v-window-item>
+      <v-window-item value="fiscal">
+        <v-card rounded="xl">
+          <v-card-title>Fiscal - central simulada</v-card-title>
+          <v-card-text>
+            <v-list density="compact">
+              <v-list-item v-for="v in store.vendas" :key="v.id"
+                ><v-list-item-title>venda #{{ v.numero }} - {{ formatarMoeda(v.total) }}</v-list-item-title
+                ><template #append
+                  ><v-chip size="small" variant="tonal">{{
+                    v.sincronizada ? 'autorizado' : 'pendente'
+                  }}</v-chip></template
+                ></v-list-item
+              >
+            </v-list>
+          </v-card-text>
+        </v-card>
+      </v-window-item>
+    </v-window>
   </div>
 </template>
-
-<style scoped>
-.admin { display: flex; flex-direction: column; gap: 14px; }
-.erro, .sucesso { font-size: 13px; border-radius: 10px; padding: 10px 14px; }
-.erro { color: var(--cor-error); background: var(--cor-error-container); }
-.sucesso { color: var(--cor-success); background: var(--cor-surface-variant); }
-.subabas { display: flex; gap: 8px; flex-wrap: wrap; }
-.subabas button { padding: 9px 16px; border-radius: 100px; border: 1px solid var(--cor-outline); background: var(--cor-surface); color: var(--cor-on-surface-variant); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
-.subabas button.ativa { background: var(--cor-primary-container); color: var(--cor-on-primary-container); border-color: transparent; }
-.cartao { background: var(--cor-surface); border: 1px solid var(--cor-outline); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
-.secao-titulo { font-size: 14px; font-weight: 700; color: var(--cor-on-surface); }
-.secao-titulo.espacar { margin-top: 8px; }
-.linha-prod { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--cor-outline); flex-wrap: wrap; }
-.prod-info { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--cor-on-surface); }
-.prod-info span { font-size: 12px; color: var(--cor-on-surface-variant); }
-.prod-preco { display: flex; gap: 8px; align-items: center; }
-.prod-preco input { width: 100px; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--cor-outline); background: var(--cor-bg); color: var(--cor-on-surface); font-family: inherit; font-size: 13px; }
-.grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-.campo { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--cor-on-surface-variant); }
-.campo input, .campo select { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--cor-outline); background: var(--cor-bg); color: var(--cor-on-surface); font-family: inherit; font-size: 13px; }
-.linha-simples { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--cor-on-surface); padding: 8px 0; border-top: 1px solid var(--cor-outline); }
-.bloco-lote { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--cor-on-surface); border-top: 1px solid var(--cor-outline); padding-top: 10px; }
-.bloco-lote-topo { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; }
-.bloco-lote-meta { font-size: 11.5px; color: var(--cor-on-surface-variant); }
-.linha-simples.lote { gap: 8px; }
-.lote-codigo { font-family: ui-monospace, monospace; font-size: 12px; background: var(--cor-surface-variant); padding: 2px 8px; border-radius: 6px; flex-shrink: 0; }
-.lote-detalhe { flex: 1; min-width: 0; }
-.badge-mini { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 100px; background: var(--cor-surface-variant); }
-.badge-mini.liberado { color: var(--cor-success); }
-.badge-mini.quarentena { color: var(--cor-secondary); }
-.badge-mini.bloqueado { color: var(--cor-error); background: var(--cor-error-container); }
-.nota { font-size: 12.5px; color: var(--cor-on-surface-variant); }
-.link { background: none; border: none; padding: 0; font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--cor-primary); cursor: pointer; }
-.botao-primario { align-self: flex-start; padding: 11px 20px; border: none; border-radius: 100px; background: var(--cor-primary); color: var(--cor-on-primary); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-.botao-secundario { padding: 9px 16px; border-radius: 100px; border: 1px solid var(--cor-outline); background: var(--cor-bg); color: var(--cor-on-surface); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
-.botao-secundario:disabled { opacity: 0.5; cursor: default; }
-</style>
